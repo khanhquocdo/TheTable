@@ -1,0 +1,299 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using TMPro;
+using UnityEngine.UI;
+using DG.Tweening;
+
+public enum ChatPosition
+{
+    Left,
+    Middle,
+    Right
+}
+
+public class UIChatManager : MonoBehaviour
+{
+    public static UIChatManager Instance { get; private set; }
+
+    [Header("UI References")]
+    public GameObject mainPanel;
+    public TextMeshProUGUI messageText;
+    public Image characterImage;
+    public Transform imageFrame;
+
+    [Header("Settings")]
+    public float typingSpeed = 0.05f;
+    public float panelAnimationDuration = 0.3f;
+    public float imageMoveDuration = 0.2f;
+    public Sprite defaultSprite;
+
+    [Header("Camera Focus Settings")]
+    public float focusDuration = 1f;
+    public float focusZoom = 80f;
+
+    [Header("Audio Settings")]
+    public AudioSource audioSource;
+    public AudioClip typingSound;
+
+    [Header("Typing Settings")]
+    public float punctuationDelay = 0.3f;
+
+    [Header("Panel Position Settings")]
+    public float panelStartY = -300f;
+    public float panelEndY = 0f;
+    public float panelSlideDistance = 20f;
+
+    private Queue<ChatData> chatQueue = new Queue<ChatData>();
+    private bool isDisplaying = false;
+    private Coroutine currentTypingCoroutine;
+    private Vector3 originalCameraPosition;
+    private int originalCameraPPU;
+
+    // Events
+    public System.Action<string, string> OnChatCompleted;
+    public System.Action OnAllChatsCompleted;
+
+    private struct ChatData
+    {
+        public string message;
+        public string characterName;
+        public ChatPosition position;
+        public Transform targetTransform;
+        public System.Action onComplete;
+    }
+
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    void Start()
+    {
+        if (mainPanel != null)
+            mainPanel.SetActive(false);
+
+        // Setup AudioSource nếu chưa có
+        SetupAudioSource();
+    }
+
+    private void SetupAudioSource()
+    {
+        if (audioSource == null)
+        {
+            audioSource = GetComponent<AudioSource>();
+            if (audioSource == null)
+            {
+                audioSource = gameObject.AddComponent<AudioSource>();
+            }
+        }
+    }
+
+
+    public void SendChat(string message, string characterName, ChatPosition position = ChatPosition.Left, Transform targetTransform = null, System.Action onComplete = null)
+    {
+        ChatData newChat = new ChatData
+        {
+            message = message,
+            characterName = characterName,
+            position = position,
+            targetTransform = targetTransform,
+            onComplete = onComplete
+        };
+
+        chatQueue.Enqueue(newChat);
+
+        if (!isDisplaying)
+        {
+            StartCoroutine(ProcessChatQueue());
+        }
+    }
+
+    private IEnumerator ProcessChatQueue()
+    {
+        isDisplaying = true;
+
+        while (chatQueue.Count > 0)
+        {
+            ChatData chatData = chatQueue.Dequeue();
+            yield return StartCoroutine(DisplayChat(chatData));
+        }
+
+        isDisplaying = false;
+    }
+
+    private IEnumerator DisplayChat(ChatData chatData)
+    {
+        // Chỉ hiển thị panel nếu chưa hiển thị
+        if (!mainPanel.activeInHierarchy)
+        {
+            mainPanel.SetActive(true);
+            // Animation từ dưới lên
+            mainPanel.transform.localPosition = new Vector3(0, panelStartY, 0);
+            mainPanel.transform.localScale = Vector3.zero;
+            mainPanel.transform.DOMoveY(panelEndY, panelAnimationDuration).SetEase(Ease.OutBack);
+            mainPanel.transform.DOScale(Vector3.one, panelAnimationDuration).SetEase(Ease.OutBack);
+            yield return new WaitForSeconds(panelAnimationDuration);
+        }
+
+        // Cập nhật text
+        messageText.text = chatData.characterName;
+
+        // Load sprite
+        LoadCharacterSprite(chatData.characterName);
+
+        // Hiệu ứng chuyển message cho panel
+        Vector3 panelTargetPos = GetPanelPosition(chatData.position);
+        mainPanel.transform.DOLocalMoveX(panelTargetPos.x, imageMoveDuration).SetEase(Ease.OutQuad);
+
+        // Di chuyển image frame
+        Vector3 targetPosition = GetImageFramePosition(chatData.position);
+        imageFrame.DOLocalMoveX(targetPosition.x, imageMoveDuration).SetEase(Ease.OutQuad);
+
+        // Typing animation
+        if (currentTypingCoroutine != null)
+            StopCoroutine(currentTypingCoroutine);
+
+        currentTypingCoroutine = StartCoroutine(TypeText($"{chatData.characterName}: {chatData.message}"));
+        yield return currentTypingCoroutine;
+
+        // Chạy callback khi chat hoàn thành
+        chatData.onComplete?.Invoke();
+
+        // Fire event
+        OnChatCompleted?.Invoke(chatData.characterName, chatData.message);
+
+        // Đợi một chút trước khi chuyển message tiếp theo
+        yield return new WaitForSeconds(1f);
+
+        // Chỉ ẩn panel nếu không còn message trong queue
+        if (chatQueue.Count == 0)
+        {
+            // Animation xuống dưới
+            messageText.text = "";
+            mainPanel.transform.DOMoveY(panelStartY, panelAnimationDuration).SetEase(Ease.InBack);
+            mainPanel.transform.DOScale(Vector3.zero, panelAnimationDuration).SetEase(Ease.InBack)
+                .OnComplete(() => mainPanel.SetActive(false));
+            yield return new WaitForSeconds(panelAnimationDuration);
+
+            // Fire event khi tất cả chat hoàn thành
+            OnAllChatsCompleted?.Invoke();
+        }
+    }
+
+    private IEnumerator TypeText(string text)
+    {
+        messageText.text = "";
+        audioSource.clip = typingSound;
+        audioSource.Stop();
+        audioSource.pitch = 2f;
+        audioSource.loop = true;
+        audioSource.Play();
+
+        // Normal typing: type từng ký tự
+        for (int i = 0; i <= text.Length; i++)
+        {
+            messageText.text = text.Substring(0, i);
+
+            if (i > 0 && i <= text.Length)
+            {
+                char lastChar = text[i - 1];
+                if (i < text.Length && (lastChar == ',' || lastChar == '.' || lastChar == '!' || lastChar == '?'))
+                {
+                    audioSource.Stop();
+                    yield return new WaitForSeconds(punctuationDelay);
+                    audioSource.Play();
+                }
+            }
+
+            yield return new WaitForSeconds(typingSpeed);
+        }
+        audioSource.Stop();
+    }
+
+    private void LoadCharacterSprite(string spriteName)
+    {
+        Sprite targetSprite = Resources.Load<Sprite>($"ProfileSprite/{spriteName}");
+
+        if (targetSprite != null)
+        {
+            characterImage.sprite = targetSprite;
+        }
+        else
+        {
+            characterImage.sprite = defaultSprite;
+        }
+    }
+
+    private Vector3 GetPanelPosition(ChatPosition position)
+    {
+        switch (position)
+        {
+            case ChatPosition.Left:
+                return Vector3.left * panelSlideDistance;
+            case ChatPosition.Middle:
+                return Vector3.zero;
+            case ChatPosition.Right:
+                return Vector3.right * panelSlideDistance;
+            default:
+                return Vector3.zero;
+        }
+    }
+
+    private Vector3 GetImageFramePosition(ChatPosition position)
+    {
+        switch (position)
+        {
+            case ChatPosition.Left:
+                return Vector3.left * 300f;
+            case ChatPosition.Middle:
+                return Vector3.zero;
+            case ChatPosition.Right:
+                return Vector3.right * 300f;
+            default:
+                return Vector3.zero;
+        }
+    }
+
+    public void SkipAllChats()
+    {
+        // Dừng typing animation hiện tại
+        if (currentTypingCoroutine != null)
+        {
+            StopCoroutine(currentTypingCoroutine);
+            currentTypingCoroutine = null;
+        }
+
+        // Dừng audio
+        if (audioSource != null)
+        {
+            audioSource.Stop();
+        }
+
+        // Xóa tất cả chat trong queue
+        chatQueue.Clear();
+
+        // Ẩn panel ngay lập tức
+        if (mainPanel != null && mainPanel.activeInHierarchy)
+        {
+            messageText.text = "";
+            mainPanel.transform.DOMoveY(panelStartY, panelAnimationDuration).SetEase(Ease.InBack);
+            mainPanel.transform.DOScale(Vector3.zero, panelAnimationDuration).SetEase(Ease.InBack)
+                .OnComplete(() => mainPanel.SetActive(false));
+        }
+
+        // Reset trạng thái
+        isDisplaying = false;
+
+        // Fire event khi skip hoàn thành
+        OnAllChatsCompleted?.Invoke();
+    }
+}
