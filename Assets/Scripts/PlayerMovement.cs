@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class TopDownMovement : MonoBehaviour
@@ -11,23 +12,43 @@ public class TopDownMovement : MonoBehaviour
     private Vector2 movement;
     public float deadZone = 0.1f;
 
-    [Header("Raycast Shooting")]
-    public float fireRate = 0.15f;
-    public float shootDistance = 20f;
-    public LayerMask hitMask;
 
-    public Transform firePoint;
 
-    private float fireTimer;
 
     private Animator ani;
     public Camera cam;
-    private Vector2 lookDirection;
+
+    [Header("Attack Settings")]
+    public float attackRange = 10f;          // Tầm bắn raycast
+    public int attackDamage = 1;             // Sát thương gây ra (tuỳ bạn xử lý)
+    public LayerMask attackLayerMask;        // Layer kẻ địch / vật thể có thể trúng đạn
+    public float fireRate = 5f;              // Số viên / giây (5 nghĩa là tối đa 5 phát/giây)
+
+    [Header("Bullet Line Settings")]
+
+    public float lineFadeTime = 0.15f;       // Thời gian mờ dần
+
+    [Header("Hit Effect Settings")]
+    public GameObject hitParticlePrefab;   // Particle System prefab khi bắn trúng
+    public float particleLifetime = 2f;      // Thời gian tồn tại của particle (nếu prefab không tự hủy)
+
+    private float nextFireTime = 0f;         // Thời gian được phép bắn tiếp theo
+    private LineRenderer lineRenderer;       // Vẽ đường đạn
+    public Transform firePoint;
+    public Vector3 firePointOffset;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         ani = GetComponent<Animator>();
+        lineRenderer = GetComponent<LineRenderer>();
+
+        if (lineRenderer != null)
+        {
+            lineRenderer.enabled = false;
+            lineRenderer.positionCount = 2;
+            lineRenderer.useWorldSpace = true;
+        }
     }
 
     void Update()
@@ -50,7 +71,8 @@ public class TopDownMovement : MonoBehaviour
         ani.SetBool("IsAttackRun", isAttackRun);
         ani.SetBool("IsAttackIdle", isAttackIdle);
         CalculateAnimation();
-        HandleRaycastShooting();
+        HandleShooting();
+
     }
     void FixedUpdate()
     {
@@ -70,53 +92,130 @@ public class TopDownMovement : MonoBehaviour
 
         ani.SetFloat("LookX", lookDirection.x);
         ani.SetFloat("LookY", lookDirection.y);
+        float angle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
+        firePoint.rotation = Quaternion.Euler(0, 0, angle);
 
-        // ===== FIRE POINT ROTATION =====
-        //float angle = Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
-        //firePoint.rotation = Quaternion.Euler(0, 0, angle);
-
-        // Đẩy firepoint ra trước mặt
-        firePoint.localPosition = lookDirection * 0.5f;
+        firePoint.localPosition = lookDirection * firePointOffset.magnitude;
     }
-    void HandleRaycastShooting()
+
+    /// <summary>
+    /// Xử lý bắn đạn bằng Raycast theo hướng trỏ chuột + fire rate
+    /// </summary>
+    void HandleShooting()
     {
-        if (!Input.GetMouseButton(0))
+        // Giữ chuột trái để bắn, nhưng bị giới hạn bởi fireRate
+        if (Input.GetMouseButton(0) == false)
+        {
             return;
+        }
 
-        fireTimer += Time.deltaTime;
-        if (fireTimer < fireRate)
+        // Giới hạn tốc độ bắn: chỉ bắn khi Time.time >= nextFireTime
+        if (Time.time < nextFireTime)
+        {
             return;
+        }
 
-        fireTimer = 0f;
+        // Tính thời điểm được bắn tiếp theo
+        float fireInterval = 1f / fireRate; // fireRate = số viên/giây
+        nextFireTime = Time.time + fireInterval;
 
-        RaycastHit2D hit = Physics2D.Raycast(
-            firePoint.position,
-            lookDirection,
-            shootDistance,
-            hitMask
-        );
+        Vector3 mouseWorld = cam.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 direction = mouseWorld - transform.position;
+        direction.Normalize();
 
-        Debug.DrawRay(
-            firePoint.position,
-            lookDirection * shootDistance,
-            Color.red,
-            0.1f
-        );
+        // Raycast 2D từ vị trí nhân vật về phía chuột
+        RaycastHit2D hit = Physics2D.Raycast(firePoint.transform.position, direction, attackRange, attackLayerMask);
+
+        Vector3 startPos = firePoint.transform.position;
+        Vector3 endPos = hit.collider != null ? (Vector3)hit.point : (Vector3)(Vector2)firePoint.transform.position + (Vector3)(direction * attackRange);
 
         if (hit.collider != null)
         {
-            // ===== HIT SOMETHING =====
-            Debug.Log("Hit: " + hit.collider.name);
+            Debug.Log("Bắn trúng: " + hit.collider.name);
 
-            // Damage (nếu có)
-            // IDamageable dmg = hit.collider.GetComponent<IDamageable>();
-            // if (dmg != null)
-            // {
-            //     dmg.TakeDamage(1);
-            // }
+            // Gây sát thương cho đối tượng bị bắn trúng
+            Health health = hit.collider.GetComponent<Health>();
+            if (health != null)
+            {
+                health.TakeDamage(attackDamage);
+                
+                // Spawn particle system tại vị trí bắn trúng
+                SpawnHitParticle(hit.point, hit.normal);
+            }
+        }
 
-            // Impact effect (nâng cấp ở dưới)
+        // Vẽ đường đạn bằng LineRenderer (nếu có)
+        if (lineRenderer != null)
+        {
+            // Mỗi lần bắn sẽ reset lại màu về startColor ban đầu
+            StopAllCoroutines();
+            StartCoroutine(DrawBulletLine(startPos, endPos));
+        }
+        else
+        {
+            // Fallback: chỉ vẽ debug ray nếu chưa gắn LineRenderer
+            Debug.DrawRay(startPos, direction * attackRange, lineRenderer.material.color, lineFadeTime);
         }
     }
+
+    IEnumerator DrawBulletLine(Vector3 start, Vector3 end)
+    {
+        lineRenderer.enabled = true;
+        lineRenderer.SetPosition(0, start);
+        lineRenderer.SetPosition(1, end);
+
+        // Thiết lập màu ban đầu (luôn reset alpha = 1 mỗi lần bắn)
+        Color startColor = new Color(lineRenderer.material.color.r, lineRenderer.material.color.g, lineRenderer.material.color.b, 1f);
+        Color endColor = new Color(lineRenderer.material.color.r, lineRenderer.material.color.g, lineRenderer.material.color.b, 1f);
+        lineRenderer.startColor = startColor;
+        lineRenderer.endColor = endColor;
+
+        float t = 0f;
+        while (t < lineFadeTime)
+        {
+            t += Time.deltaTime;
+            float alpha = Mathf.Lerp(1f, 0f, t / lineFadeTime);
+            Color c = new Color(lineRenderer.material.color.r, lineRenderer.material.color.g, lineRenderer.material.color.b, alpha);
+            lineRenderer.startColor = c;
+            lineRenderer.endColor = c;
+            yield return null;
+        }
+
+        lineRenderer.enabled = false;
+    }
+
+    /// <summary>
+    /// Spawn particle system tại vị trí bắn trúng
+    /// </summary>
+    /// <param name="hitPoint">Vị trí bắn trúng</param>
+    /// <param name="hitNormal">Hướng pháp tuyến của bề mặt bị bắn trúng</param>
+    private void SpawnHitParticle(Vector2 hitPoint, Vector2 hitNormal)
+    {
+        if (hitParticlePrefab == null) return;
+
+        // Spawn particle tại vị trí bắn trúng
+        GameObject particleInstance = Instantiate(hitParticlePrefab, hitPoint, Quaternion.identity);
+        
+        // Xoay particle theo hướng pháp tuyến (nếu cần)
+        if (hitNormal != Vector2.zero)
+        {
+            float angle = Mathf.Atan2(hitNormal.y, hitNormal.x) * Mathf.Rad2Deg;
+            particleInstance.transform.rotation = Quaternion.Euler(0, 0, angle);
+        }
+
+        // Tự động hủy particle sau một khoảng thời gian (nếu prefab không tự hủy)
+        ParticleSystem ps = particleInstance.GetComponent<ParticleSystem>();
+        if (ps != null && !ps.main.playOnAwake)
+        {
+            ps.Play();
+        }
+
+        // Hủy particle sau khi kết thúc (nếu prefab không tự hủy)
+        if (particleLifetime > 0f)
+        {
+            Destroy(particleInstance, particleLifetime);
+        }
+    }
+
 }
 
