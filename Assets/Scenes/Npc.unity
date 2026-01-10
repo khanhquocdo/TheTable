@@ -826,6 +826,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 5
+  deadZone: 0.1
+  cam: {fileID: 0}
+  attackRange: 10
+  attackDamage: 1
+  attackLayerMask:
+    serializedVersion: 2
+    m_Bits: 0
+  fireRate: 5
+  lineFadeTime: 0.15
+  hitParticlePrefab: {fileID: 0}
+  particleLifetime: 2
+  firePoint: {fileID: 0}
+  firePointOffset: {x: 0, y: 0, z: 0}
 --- !u!1 &1835764539
 GameObject:
   m_ObjectHideFlags: 0
