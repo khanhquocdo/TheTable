@@ -59,6 +59,3 @@ TagManager:
   - name: Decor
     uniqueID: 1386869619
     locked: 0
-  - name: UI
-    uniqueID: 2804653785
-    locked: 0

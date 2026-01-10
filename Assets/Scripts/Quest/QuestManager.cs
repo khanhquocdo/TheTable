@@ -24,41 +24,25 @@ public class QuestManager : MonoBehaviour
     public void AddQuest(Quest quest)
     {
         quests.Add(quest);
-        GameEvents.ShowNotice($"Đã nhận nhiệm vụ: {quest.questDescription}");
         quest.questDirector = Instantiate(questDirectorPrefab, new Vector2(-999f, -999f), Quaternion.identity);
-        GetPlayerTransform();
     }
 
     public void RemoveQuest(Quest quest)
     {
-        Destroy(quest.questDirector);
         quests.Remove(quest);
-        GetPlayerTransform();
     }
 
     public void RemoveQuest(string questName)
     {
-        quests.FindAll(quest => quest.questName == questName).ForEach(quest => RemoveQuest(quest));
+        quests.RemoveAll(quest => quest.questName == questName);
     }
 
     void Update()
     {
         if (quests.Count == 0) return;
-        if (playerTransform == null)
-        {
-            return;
-        }
         Vector2 direction = playerTransform.position - quests[0].questTarget;
         direction.Normalize();
         quests[0].questDirector.transform.rotation = Quaternion.Euler(0, 0, Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90f);
         quests[0].questDirector.transform.position = playerTransform.position - new Vector3(direction.x, direction.y, 0);
-    }
-
-    void GetPlayerTransform()
-    {
-        if (playerTransform == null)
-        {
-            playerTransform = GameObject.FindGameObjectWithTag("Player").GetComponent<Transform>();
-        }
     }
 }

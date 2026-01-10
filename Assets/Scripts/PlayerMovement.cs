@@ -1,8 +1,9 @@
 using UnityEngine;
 using System.Collections;
+using System;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class TopDownMovement : MonoBehaviour
+public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
     public float moveSpeed = 5f;
@@ -53,6 +54,31 @@ public class TopDownMovement : MonoBehaviour
 
     void Update()
     {
+        // Kiểm tra nếu weapon hiện tại đang lock movement
+        bool isLockingMovement = false;
+        var equipmentSystem = GetEquipmentSystem();
+        if (equipmentSystem != null)
+        {
+            var method = equipmentSystem.GetType().GetMethod("IsCurrentWeaponLockingMovement");
+            if (method != null)
+            {
+                isLockingMovement = (bool)method.Invoke(equipmentSystem, null);
+            }
+        }
+        
+        // Fallback: Kiểm tra nếu đang ném grenade hoặc molotov (cho tương thích ngược)
+        if (GrenadeController.IsThrowingGrenade || MolotovController.IsThrowingMolotov)
+        {
+            isLockingMovement = true;
+        }
+        
+        if (isLockingMovement)
+        {
+            movement = Vector2.zero;
+            //ani.SetFloat("Speed", 0f);
+            return;
+        }
+
         // Lấy input 8 hướng (WASD / Arrow)
         movementInput.x = Input.GetAxisRaw("Horizontal");
         movementInput.y = Input.GetAxisRaw("Vertical");
@@ -71,11 +97,55 @@ public class TopDownMovement : MonoBehaviour
         ani.SetBool("IsAttackRun", isAttackRun);
         ani.SetBool("IsAttackIdle", isAttackIdle);
         CalculateAnimation();
-        HandleShooting();
-
+        
+        // Sử dụng EquipmentSystem nếu có, nếu không thì dùng logic cũ
+        var equipmentSystemForAttack = GetEquipmentSystem();
+        if (equipmentSystemForAttack != null)
+        {
+            HandleWeaponAttack();
+        }
+        else
+        {
+            HandleShooting();
+        }
+    }
+    
+    // Helper method để tránh lỗi compile khi EquipmentSystem chưa được compile
+    private MonoBehaviour GetEquipmentSystem()
+    {
+        Type equipmentSystemType = Type.GetType("EquipmentSystem");
+        if (equipmentSystemType != null)
+        {
+            return FindObjectOfType(equipmentSystemType) as MonoBehaviour;
+        }
+        return null;
     }
     void FixedUpdate()
     {
+        // Kiểm tra nếu weapon hiện tại đang lock movement
+        bool isLockingMovement = false;
+        var equipmentSystem = GetEquipmentSystem();
+        if (equipmentSystem != null)
+        {
+            var method = equipmentSystem.GetType().GetMethod("IsCurrentWeaponLockingMovement");
+            if (method != null)
+            {
+                isLockingMovement = (bool)method.Invoke(equipmentSystem, null);
+            }
+        }
+        
+        // Fallback: Kiểm tra nếu đang ném grenade hoặc molotov (cho tương thích ngược)
+        if (GrenadeController.IsThrowingGrenade || MolotovController.IsThrowingMolotov)
+        {
+            isLockingMovement = true;
+        }
+        
+        if (isLockingMovement)
+        {
+            rb.velocity = Vector2.zero;
+            return;
+        }
+
         rb.velocity = movement * moveSpeed;
     }
 
@@ -99,7 +169,46 @@ public class TopDownMovement : MonoBehaviour
     }
 
     /// <summary>
-    /// Xử lý bắn đạn bằng Raycast theo hướng trỏ chuột + fire rate
+    /// Xử lý tấn công bằng weapon hiện tại từ EquipmentSystem
+    /// </summary>
+    void HandleWeaponAttack()
+    {
+        // Giữ chuột trái để tấn công
+        if (Input.GetMouseButton(0) == false)
+        {
+            return;
+        }
+        
+        var equipmentSystem = GetEquipmentSystem();
+        if (equipmentSystem == null)
+        {
+            return;
+        }
+        
+        var currentWeaponProp = equipmentSystem.GetType().GetProperty("CurrentWeapon");
+        if (currentWeaponProp == null || currentWeaponProp.GetValue(equipmentSystem) == null)
+        {
+            return;
+        }
+        
+        // Tính hướng tấn công từ player đến chuột
+        Vector3 mouseWorld = cam.ScreenToWorldPoint(Input.mousePosition);
+        Vector2 direction = mouseWorld - transform.position;
+        direction.Normalize();
+        
+        // Lấy vị trí xuất phát
+        Vector2 attackPosition = firePoint != null ? firePoint.position : transform.position;
+        
+        // Sử dụng weapon hiện tại
+        var useMethod = equipmentSystem.GetType().GetMethod("UseCurrentWeapon");
+        if (useMethod != null)
+        {
+            useMethod.Invoke(equipmentSystem, new object[] { direction, attackPosition });
+        }
+    }
+    
+    /// <summary>
+    /// Xử lý bắn đạn bằng Raycast theo hướng trỏ chuột + fire rate (logic cũ, dùng khi không có EquipmentSystem)
     /// </summary>
     void HandleShooting()
     {
@@ -158,8 +267,13 @@ public class TopDownMovement : MonoBehaviour
         }
     }
 
-    IEnumerator DrawBulletLine(Vector3 start, Vector3 end)
+    /// <summary>
+    /// Vẽ đường đạn bằng LineRenderer (public để GunWeapon có thể gọi)
+    /// </summary>
+    public IEnumerator DrawBulletLine(Vector3 start, Vector3 end)
     {
+        if (lineRenderer == null) yield break;
+        
         lineRenderer.enabled = true;
         lineRenderer.SetPosition(0, start);
         lineRenderer.SetPosition(1, end);
