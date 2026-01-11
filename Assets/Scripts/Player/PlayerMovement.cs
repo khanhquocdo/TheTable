@@ -3,6 +3,7 @@ using System.Collections;
 using System;
 
 [RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(Health))]
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement Settings")]
@@ -18,6 +19,9 @@ public class PlayerMovement : MonoBehaviour
 
     private Animator ani;
     public Camera cam;
+    
+    // Health System
+    private Health health;
 
     [Header("Attack Settings")]
     public float attackRange = 10f;          // Tầm bắn raycast
@@ -43,6 +47,7 @@ public class PlayerMovement : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         ani = GetComponent<Animator>();
         lineRenderer = GetComponent<LineRenderer>();
+        health = GetComponent<Health>();
 
         if (lineRenderer != null)
         {
@@ -51,9 +56,37 @@ public class PlayerMovement : MonoBehaviour
             lineRenderer.useWorldSpace = true;
         }
     }
+    
+    void Start()
+    {
+        // Subscribe to health events
+        if (health != null)
+        {
+            health.OnDeath += OnPlayerDeath;
+            health.OnDamageTaken += OnPlayerDamageTaken;
+        }
+    }
+    
+    void OnDestroy()
+    {
+        // Unsubscribe from health events
+        if (health != null)
+        {
+            health.OnDeath -= OnPlayerDeath;
+            health.OnDamageTaken -= OnPlayerDamageTaken;
+        }
+    }
 
     void Update()
     {
+        // Không cho phép di chuyển nếu player đã chết
+        if (health != null && health.IsDead)
+        {
+            movement = Vector2.zero;
+            rb.velocity = Vector2.zero;
+            return;
+        }
+        
         // Kiểm tra nếu weapon hiện tại đang lock movement
         bool isLockingMovement = false;
         var equipmentSystem = GetEquipmentSystem();
@@ -330,6 +363,48 @@ public class PlayerMovement : MonoBehaviour
             Destroy(particleInstance, particleLifetime);
         }
     }
+    
+    #region Health System
+    
+    /// <summary>
+    /// Xử lý khi player nhận sát thương
+    /// </summary>
+    private void OnPlayerDamageTaken(float damage)
+    {
+        // Có thể thêm hiệu ứng như màn hình đỏ, camera shake, v.v.
+        Debug.Log($"Player nhận {damage} sát thương!");
+    }
+    
+    /// <summary>
+    /// Xử lý khi player chết
+    /// </summary>
+    private void OnPlayerDeath()
+    {
+        Debug.Log("Player đã chết!");
+        
+        // Dừng di chuyển
+        rb.velocity = Vector2.zero;
+        movement = Vector2.zero;
+        
+        // Disable movement và attack
+        enabled = false;
+        
+        // Có thể thêm logic khác như:
+        // - Hiển thị Game Over UI
+        // - Respawn sau một khoảng thời gian
+        // - Phát animation chết
+        // - V.v.
+    }
+    
+    /// <summary>
+    /// Lấy Health component (public để các script khác có thể truy cập)
+    /// </summary>
+    public Health GetHealth()
+    {
+        return health;
+    }
+    
+    #endregion
 
 }
 

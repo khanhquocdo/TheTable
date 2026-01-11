@@ -1,0 +1,406 @@
+using UnityEngine;
+
+/// <summary>
+/// Controller chính cho Enemy AI
+/// Quản lý State Machine, Detection, Movement, và Shooting
+/// </summary>
+[RequireComponent(typeof(Rigidbody2D))]
+public class EnemyController : MonoBehaviour
+{
+    public enum EnemyStateType
+    {
+        Idle,
+        Chase,
+        Attack
+    }
+    
+    [Header("References")]
+    [SerializeField] private EnemyData enemyData;
+    [SerializeField] private Transform firePoint;
+    [SerializeField] private SpriteRenderer spriteRenderer;
+    
+    [Header("Debug")]
+    [SerializeField] private bool showDebugGizmos = true;
+    
+    // Components
+    private Rigidbody2D rb;
+    private Health health;
+    
+    // State Machine
+    private EnemyState currentState;
+    private EnemyIdleState idleState;
+    private EnemyChaseState chaseState;
+    private EnemyAttackState attackState;
+    
+    // Player Detection
+    private Transform playerTarget;
+    private const string PLAYER_TAG = "Player";
+    
+    // Movement
+    private Vector2 movementDirection;
+    
+    // Attack state tracking (for animation)
+    private bool isAttacking = false;
+    
+    /// <summary>
+    /// Property để EnemyAnimator kiểm tra trạng thái tấn công
+    /// </summary>
+    public bool IsAttacking => isAttacking;
+    
+    void Awake()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        health = GetComponent<Health>();
+        
+        // Validate
+        if (enemyData == null)
+        {
+            Debug.LogError($"EnemyController: {gameObject.name} chưa có EnemyData được gán!");
+        }
+        
+        if (firePoint == null)
+        {
+            // Tạo firePoint nếu chưa có
+            GameObject firePointObj = new GameObject("FirePoint");
+            firePointObj.transform.SetParent(transform);
+            firePointObj.transform.localPosition = Vector2.up * 0.5f;
+            firePoint = firePointObj.transform;
+        }
+        
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = GetComponent<SpriteRenderer>();
+        }
+    }
+    
+    void Start()
+    {
+        // Khởi tạo các state
+        idleState = new EnemyIdleState(this, enemyData);
+        chaseState = new EnemyChaseState(this, enemyData);
+        attackState = new EnemyAttackState(this, enemyData);
+        
+        // Bắt đầu với Idle state
+        ChangeState(EnemyStateType.Idle);
+        
+        // Tìm Player nếu chưa có
+        if (playerTarget == null)
+        {
+            FindPlayer();
+        }
+        
+        // Subscribe to health events
+        if (health != null)
+        {
+            health.OnDeath += OnEnemyDeath;
+        }
+    }
+    
+    void Update()
+    {
+        if (currentState != null)
+        {
+            currentState.Update();
+        }
+        
+        // Tìm Player nếu mất target
+        if (playerTarget == null)
+        {
+            FindPlayer();
+        }
+        
+        // Luôn xoay firePoint về player nếu có player target và trong phạm vi phát hiện
+        // Điều này đảm bảo firePoint luôn theo dõi player khi player di chuyển xung quanh enemy
+        if (HasPlayerTarget())
+        {
+            float distanceToPlayer = GetDistanceToPlayer();
+            if (distanceToPlayer <= enemyData.detectRadius)
+            {
+                Vector2 playerPosition = GetPlayerPosition();
+                LookAt(playerPosition);
+            }
+        }
+    }
+    
+    void FixedUpdate()
+    {
+        if (currentState != null)
+        {
+            currentState.FixedUpdate();
+        }
+        
+        // Áp dụng movement
+        rb.velocity = movementDirection * enemyData.moveSpeed;
+    }
+    
+    void OnDestroy()
+    {
+        if (health != null)
+        {
+            health.OnDeath -= OnEnemyDeath;
+        }
+    }
+    
+    #region State Management
+    
+    /// <summary>
+    /// Chuyển đổi state
+    /// </summary>
+    public void ChangeState(EnemyStateType newStateType)
+    {
+        if (currentState != null)
+        {
+            currentState.OnExit();
+        }
+        
+        // Cập nhật attack state cho animation
+        isAttacking = (newStateType == EnemyStateType.Attack);
+        
+        switch (newStateType)
+        {
+            case EnemyStateType.Idle:
+                currentState = idleState;
+                break;
+            case EnemyStateType.Chase:
+                currentState = chaseState;
+                break;
+            case EnemyStateType.Attack:
+                currentState = attackState;
+                break;
+        }
+        
+        if (currentState != null)
+        {
+            currentState.OnEnter();
+        }
+    }
+    
+    #endregion
+    
+    #region Player Detection
+    
+    /// <summary>
+    /// Tìm Player trong scene
+    /// </summary>
+    private void FindPlayer()
+    {
+        GameObject playerObj = GameObject.FindGameObjectWithTag(PLAYER_TAG);
+        if (playerObj != null)
+        {
+            playerTarget = playerObj.transform;
+        }
+    }
+    
+    /// <summary>
+    /// Kiểm tra có thể phát hiện Player không (khoảng cách + Line of Sight)
+    /// </summary>
+    public bool CanDetectPlayer()
+    {
+        if (!HasPlayerTarget())
+        {
+            return false;
+        }
+        
+        float distance = GetDistanceToPlayer();
+        if (distance > enemyData.detectRadius)
+        {
+            return false;
+        }
+        
+        return HasLineOfSightToPlayer();
+    }
+    
+    /// <summary>
+    /// Kiểm tra có Line of Sight đến Player không
+    /// </summary>
+    public bool HasLineOfSightToPlayer()
+    {
+        if (!HasPlayerTarget())
+        {
+            return false;
+        }
+        
+        Vector2 enemyPos = transform.position;
+        Vector2 playerPos = GetPlayerPosition();
+        Vector2 direction = (playerPos - enemyPos).normalized;
+        float distance = Vector2.Distance(enemyPos, playerPos);
+        
+        // Raycast để kiểm tra obstacle
+        RaycastHit2D hit = Physics2D.Raycast(enemyPos, direction, distance, enemyData.obstacleLayer);
+        
+        // Nếu không có obstacle, có Line of Sight
+        return hit.collider == null;
+    }
+    
+    /// <summary>
+    /// Kiểm tra có Player target không
+    /// </summary>
+    public bool HasPlayerTarget()
+    {
+        return playerTarget != null && playerTarget.gameObject.activeInHierarchy;
+    }
+    
+    /// <summary>
+    /// Lấy vị trí Player
+    /// </summary>
+    public Vector2 GetPlayerPosition()
+    {
+        if (HasPlayerTarget())
+        {
+            return playerTarget.position;
+        }
+        return Vector2.zero;
+    }
+    
+    /// <summary>
+    /// Lấy khoảng cách đến Player
+    /// </summary>
+    public float GetDistanceToPlayer()
+    {
+        if (!HasPlayerTarget())
+        {
+            return float.MaxValue;
+        }
+        
+        return Vector2.Distance(transform.position, GetPlayerPosition());
+    }
+    
+    #endregion
+    
+    #region Movement
+    
+    /// <summary>
+    /// Di chuyển enemy theo hướng (được gọi từ states)
+    /// </summary>
+    public void Move(Vector2 direction)
+    {
+        movementDirection = direction.normalized;
+    }
+    
+    /// <summary>
+    /// Quay mặt về một vị trí
+    /// </summary>
+    public void LookAt(Vector2 targetPosition)
+    {
+        Vector2 direction = (targetPosition - (Vector2)transform.position).normalized;
+        
+        // Quay sprite về hướng target
+        // if (spriteRenderer != null)
+        // {
+        //     // Nếu direction.x < 0, flip sprite
+        //     spriteRenderer.flipX = direction.x < 0;
+        // }
+        
+        // Quay firePoint về hướng target
+        if (firePoint != null)
+        {
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            firePoint.rotation = Quaternion.Euler(0, 0, angle);
+        }
+    }
+    
+    #endregion
+    
+    #region Shooting
+    
+    /// <summary>
+    /// Bắn đạn theo hướng
+    /// </summary>
+    public void Shoot(Vector2 direction)
+    {
+        if (EnemyBulletPool.Instance == null)
+        {
+            Debug.LogWarning("EnemyBulletPool chưa được khởi tạo!");
+            return;
+        }
+        
+        Vector2 spawnPosition = firePoint != null ? firePoint.position : transform.position;
+        EnemyBulletPool.Instance.SpawnBullet(
+            spawnPosition, 
+            direction, 
+            enemyData.bulletSpeed, 
+            enemyData.bulletDamage, 
+            enemyData.bulletLifetime,
+            enemyData.playerLayer,
+            enemyData.obstacleLayer
+        );
+    }
+    
+    #endregion
+    
+    #region Events
+    
+    private void OnEnemyDeath()
+    {
+        // Dừng tất cả hành vi khi chết
+        rb.velocity = Vector2.zero;
+        movementDirection = Vector2.zero;
+        enabled = false;
+        
+        // Disable animation để tối ưu performance
+        // Note: EnemyAnimator component sẽ được disable nếu có
+        Component animatorComponent = GetComponent("EnemyAnimator");
+        if (animatorComponent != null)
+        {
+            // Disable Animator component thay vì EnemyAnimator
+            Animator anim = GetComponent<Animator>();
+            if (anim != null)
+            {
+                anim.enabled = false;
+            }
+        }
+    }
+    
+    #endregion
+    
+    #region Gizmos
+    
+    void OnDrawGizmosSelected()
+    {
+        if (enemyData == null || !showDebugGizmos)
+        {
+            return;
+        }
+        
+        // Vẽ detect radius
+        Gizmos.color = Color.yellow;
+        DrawWireCircle(transform.position, enemyData.detectRadius);
+        
+        // Vẽ min/max distance
+        Gizmos.color = Color.red;
+        DrawWireCircle(transform.position, enemyData.minDistance);
+        
+        Gizmos.color = Color.green;
+        DrawWireCircle(transform.position, enemyData.maxAttackDistance);
+        
+        // Vẽ line to player
+        if (HasPlayerTarget())
+        {
+            Vector2 playerPos = GetPlayerPosition();
+            bool hasLOS = HasLineOfSightToPlayer();
+            Gizmos.color = hasLOS ? Color.green : Color.red;
+            Gizmos.DrawLine(transform.position, playerPos);
+        }
+    }
+    
+    /// <summary>
+    /// Vẽ wire circle bằng cách vẽ nhiều line segments (tương thích với mọi phiên bản Unity)
+    /// </summary>
+    private void DrawWireCircle(Vector3 center, float radius)
+    {
+        int segments = 32;
+        float angleStep = 360f / segments;
+        Vector3 prevPoint = center + Vector3.right * radius;
+        
+        for (int i = 1; i <= segments; i++)
+        {
+            float angle = i * angleStep * Mathf.Deg2Rad;
+            Vector3 newPoint = center + new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0) * radius;
+            Gizmos.DrawLine(prevPoint, newPoint);
+            prevPoint = newPoint;
+        }
+    }
+    
+    #endregion
+}
+

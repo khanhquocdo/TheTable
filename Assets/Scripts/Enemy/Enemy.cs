@@ -1,22 +1,22 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Component chính cho Enemy
+/// Sử dụng EnemyController để xử lý AI
+/// </summary>
+[RequireComponent(typeof(EnemyController))]
+[RequireComponent(typeof(Health))]
 public class Enemy : MonoBehaviour
 {
-    // Start is called before the first frame update
-    void Start()
+    // Enemy class này có thể được mở rộng thêm logic riêng nếu cần
+    // Phần lớn logic AI được xử lý bởi EnemyController
+    
+    private EnemyController controller;
+    private Health health;
+    
+    void Awake()
     {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-    void OlisionEnter2D(Collision2D collision)
-    {
-        
+        controller = GetComponent<EnemyController>();
+        health = GetComponent<Health>();
     }
 }
