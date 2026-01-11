@@ -46,22 +46,6 @@ public class GrenadeController : MonoBehaviour
     void Update()
     {
         if (!isInitialized) return;
-
-        // Kiểm tra input chuột phải
-        if (Input.GetMouseButtonDown(1)) // Chuột phải
-        {
-            if (TryThrowGrenade())
-            {
-                // Cache hướng ném ngay khi nhấn chuột
-                CacheThrowDirection();
-                
-                ani.SetTrigger("IsThrowNade");
-                // Lock movement trong thời gian animation
-                StartCoroutine(LockMovementDuringThrow());
-                // Delay spawn grenade
-                StartCoroutine(DelayedSpawnGrenade());
-            }
-        }
     }
 
     /// <summary>

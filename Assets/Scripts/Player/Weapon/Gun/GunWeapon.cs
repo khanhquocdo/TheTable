@@ -73,7 +73,7 @@ public class GunWeapon : IWeapon
             if (health != null)
             {
                 health.TakeDamage(attackDamage);
-                SpawnHitParticle(hit.point, hit.normal);
+                SpawnHitParticle(hit.point, hit.normal, hit.collider.transform);
             }
         }
         
@@ -96,11 +96,17 @@ public class GunWeapon : IWeapon
         return false; // Gun không lock movement
     }
     
-    private void SpawnHitParticle(Vector2 hitPoint, Vector2 hitNormal)
+    private void SpawnHitParticle(Vector2 hitPoint, Vector2 hitNormal, Transform parentTransform = null)
     {
         if (hitParticlePrefab == null) return;
         
         GameObject particleInstance = Object.Instantiate(hitParticlePrefab, hitPoint, Quaternion.identity);
+        
+        // Set particle làm child của Enemy nếu có parentTransform
+        if (parentTransform != null)
+        {
+            particleInstance.transform.SetParent(parentTransform);
+        }
         
         if (hitNormal != Vector2.zero)
         {

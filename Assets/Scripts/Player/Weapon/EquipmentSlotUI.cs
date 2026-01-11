@@ -11,6 +11,7 @@ public class EquipmentSlotUI : MonoBehaviour
     [SerializeField] private Image[] slotIcons = new Image[3]; // Icon của từng slot
     [SerializeField] private Image[] slotBorders = new Image[3]; // Viền highlight của từng slot
     [SerializeField] private TextMeshProUGUI[] slotNumbers = new TextMeshProUGUI[3]; // Số slot (1, 2, 3)
+    [SerializeField] private TextMeshProUGUI[] slotAmountTexts = new TextMeshProUGUI[3]; // Hiển thị số lượng item (Grenade, Molotov)
     
     [Header("Highlight Settings")]
     [SerializeField] private Color normalBorderColor = Color.white;
@@ -32,6 +33,12 @@ public class EquipmentSlotUI : MonoBehaviour
         // Subscribe events
         equipmentSystem.OnSlotChanged += OnSlotChanged;
         
+        // Subscribe to inventory events để cập nhật số lượng
+        if (InventorySystem.Instance != null)
+        {
+            InventorySystem.Instance.OnItemAmountChanged += OnItemAmountChanged;
+        }
+        
         // Khởi tạo UI ban đầu
         UpdateAllSlots();
     }
@@ -42,6 +49,20 @@ public class EquipmentSlotUI : MonoBehaviour
         {
             equipmentSystem.OnSlotChanged -= OnSlotChanged;
         }
+        
+        if (InventorySystem.Instance != null)
+        {
+            InventorySystem.Instance.OnItemAmountChanged -= OnItemAmountChanged;
+        }
+    }
+    
+    /// <summary>
+    /// Cập nhật UI khi số lượng item thay đổi
+    /// </summary>
+    private void OnItemAmountChanged(WeaponType itemType, int newAmount)
+    {
+        // Cập nhật tất cả slots để kiểm tra xem slot nào đang chứa item này
+        UpdateAllSlots();
     }
     
     /// <summary>
@@ -113,6 +134,54 @@ public class EquipmentSlotUI : MonoBehaviour
             slotNumbers[slotIndex].text = (slotIndex + 1).ToString();
             slotNumbers[slotIndex].color = isActive ? activeBorderColor : normalBorderColor;
         }
+        
+        // Cập nhật số lượng item (cho consumable weapons)
+        UpdateSlotAmount(slotIndex, weapon, isActive);
+    }
+    
+    /// <summary>
+    /// Cập nhật hiển thị số lượng item cho slot
+    /// </summary>
+    private void UpdateSlotAmount(int slotIndex, IWeapon weapon, bool isActive)
+    {
+        if (slotAmountTexts[slotIndex] == null) return;
+        
+        // Kiểm tra nếu weapon là consumable (Grenade, Molotov)
+        if (weapon is IConsumableWeapon consumableWeapon)
+        {
+            int amount = consumableWeapon.GetCurrentAmount();
+            int maxStack = consumableWeapon.GetMaxStack();
+            
+            // Hiển thị số lượng
+            slotAmountTexts[slotIndex].text = amount > 0 ? amount.ToString() : "0";
+            
+            // Đổi màu dựa trên số lượng
+            if (amount == 0)
+            {
+                slotAmountTexts[slotIndex].color = Color.red; // Màu đỏ khi hết
+            }
+            else if (amount <= maxStack * 0.3f)
+            {
+                slotAmountTexts[slotIndex].color = Color.yellow; // Màu vàng khi sắp hết
+            }
+            else
+            {
+                slotAmountTexts[slotIndex].color = Color.white; // Màu trắng khi đủ
+            }
+            
+            slotAmountTexts[slotIndex].gameObject.SetActive(true);
+            
+            // Làm mờ icon nếu số lượng = 0
+            if (slotIcons[slotIndex] != null)
+            {
+                slotIcons[slotIndex].color = amount > 0 ? Color.white : new Color(0.5f, 0.5f, 0.5f, 0.5f);
+            }
+        }
+        else
+        {
+            // Ẩn số lượng cho non-consumable weapons (Gun)
+            slotAmountTexts[slotIndex].gameObject.SetActive(false);
+        }
     }
     
     /// <summary>
@@ -139,6 +208,14 @@ public class EquipmentSlotUI : MonoBehaviour
         if (slotIndex >= 0 && slotIndex < 3)
         {
             slotNumbers[slotIndex] = numberText;
+        }
+    }
+    
+    public void SetSlotAmountText(int slotIndex, TextMeshProUGUI amountText)
+    {
+        if (slotIndex >= 0 && slotIndex < 3)
+        {
+            slotAmountTexts[slotIndex] = amountText;
         }
     }
 }

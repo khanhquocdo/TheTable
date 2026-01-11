@@ -22,10 +22,11 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 128
-  fireRate: 2.92
+  fireRate: 8.01
   bulletDamage: 0
-  bulletSpeed: 20
+  bulletSpeed: 23.73
   bulletLifetime: 3
+  bulletSpreadAngle: 23.9
   canPatrol: 1
   patrolRadius: 5
   idleTime: 5

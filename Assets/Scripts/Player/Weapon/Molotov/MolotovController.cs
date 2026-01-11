@@ -48,26 +48,6 @@ public class MolotovController : MonoBehaviour
     {
         if (!isInitialized) return;
 
-        // Kiểm tra input phím F
-        if (Input.GetKeyDown(KeyCode.F))
-        {
-            if (TryThrowMolotov())
-            {
-                // Cache hướng ném ngay khi nhấn phím
-                CacheThrowDirection();
-
-                // Trigger animation nếu có
-                if (ani != null)
-                {
-                    ani.SetTrigger("IsThrowNade");
-                }
-
-                // Lock movement trong thời gian animation
-                StartCoroutine(LockMovementDuringThrow());
-                // Delay spawn Molotov
-                StartCoroutine(DelayedSpawnMolotov());
-            }
-        }
     }
 
     /// <summary>

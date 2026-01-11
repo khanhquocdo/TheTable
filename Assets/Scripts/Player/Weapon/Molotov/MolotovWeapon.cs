@@ -4,7 +4,7 @@ using UnityEngine;
 /// Vũ khí Molotov - ném molotov theo hướng chuột
 /// </summary>
 [System.Serializable]
-public class MolotovWeapon : IWeapon
+public class MolotovWeapon : IConsumableWeapon
 {
     [Header("Molotov Settings")]
     public GameObject molotovPrefab;
@@ -59,6 +59,13 @@ public class MolotovWeapon : IWeapon
     {
         if (!CanUse()) return;
         
+        // Kiểm tra và giảm số lượng từ inventory
+        if (InventorySystem.Instance == null || !InventorySystem.Instance.UseItem(WeaponType.Molotov, 1))
+        {
+            Debug.LogWarning("MolotovWeapon: Không đủ molotov để ném!");
+            return;
+        }
+        
         // Cache hướng ném
         cachedPosition = throwPoint != null ? throwPoint.position : position;
         cachedDirection = direction.normalized;
@@ -82,7 +89,32 @@ public class MolotovWeapon : IWeapon
         if (Time.time < lastThrowTime + throwCooldown) return false;
         if (isThrowing) return false;
         if (MolotovPool.Instance == null || !MolotovPool.Instance.HasAvailableMolotov()) return false;
+        
+        // Kiểm tra số lượng trong inventory
+        if (InventorySystem.Instance == null || !HasAmmo())
+        {
+            return false;
+        }
+        
         return true;
+    }
+    
+    // IConsumableWeapon implementation
+    public int GetCurrentAmount()
+    {
+        if (InventorySystem.Instance == null) return 0;
+        return InventorySystem.Instance.GetItemAmount(WeaponType.Molotov);
+    }
+    
+    public int GetMaxStack()
+    {
+        if (InventorySystem.Instance == null) return 0;
+        return InventorySystem.Instance.GetMaxStack(WeaponType.Molotov);
+    }
+    
+    public bool HasAmmo()
+    {
+        return GetCurrentAmount() > 0;
     }
     
     public bool IsLockingMovement()

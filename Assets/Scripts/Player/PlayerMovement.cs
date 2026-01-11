@@ -281,8 +281,8 @@ public class PlayerMovement : MonoBehaviour
             {
                 health.TakeDamage(attackDamage);
                 
-                // Spawn particle system tại vị trí bắn trúng
-                SpawnHitParticle(hit.point, hit.normal);
+                // Spawn particle system tại vị trí bắn trúng và set làm child của Enemy
+                SpawnHitParticle(hit.point, hit.normal, hit.collider.transform);
             }
         }
 
@@ -336,12 +336,19 @@ public class PlayerMovement : MonoBehaviour
     /// </summary>
     /// <param name="hitPoint">Vị trí bắn trúng</param>
     /// <param name="hitNormal">Hướng pháp tuyến của bề mặt bị bắn trúng</param>
-    private void SpawnHitParticle(Vector2 hitPoint, Vector2 hitNormal)
+    /// <param name="parentTransform">Transform của Enemy để set làm parent của particle</param>
+    private void SpawnHitParticle(Vector2 hitPoint, Vector2 hitNormal, Transform parentTransform = null)
     {
         if (hitParticlePrefab == null) return;
 
         // Spawn particle tại vị trí bắn trúng
         GameObject particleInstance = Instantiate(hitParticlePrefab, hitPoint, Quaternion.identity);
+        
+        // Set particle làm child của Enemy nếu có parentTransform
+        if (parentTransform != null)
+        {
+            particleInstance.transform.SetParent(parentTransform);
+        }
         
         // Xoay particle theo hướng pháp tuyến (nếu cần)
         if (hitNormal != Vector2.zero)
@@ -386,13 +393,18 @@ public class PlayerMovement : MonoBehaviour
         rb.velocity = Vector2.zero;
         movement = Vector2.zero;
         
+        // Trigger animation Die
+        if (ani != null)
+        {
+            ani.SetTrigger("IsDie");
+        }
+        
         // Disable movement và attack
         enabled = false;
         
         // Có thể thêm logic khác như:
         // - Hiển thị Game Over UI
         // - Respawn sau một khoảng thời gian
-        // - Phát animation chết
         // - V.v.
     }
     

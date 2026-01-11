@@ -4,7 +4,7 @@ using UnityEngine;
 /// Vũ khí Grenade - ném grenade theo hướng chuột
 /// </summary>
 [System.Serializable]
-public class GrenadeWeapon : IWeapon
+public class GrenadeWeapon : IConsumableWeapon
 {
     [Header("Grenade Settings")]
     public GameObject grenadePrefab;
@@ -58,6 +58,13 @@ public class GrenadeWeapon : IWeapon
     {
         if (!CanUse()) return;
         
+        // Kiểm tra và giảm số lượng từ inventory
+        if (InventorySystem.Instance == null || !InventorySystem.Instance.UseItem(WeaponType.Grenade, 1))
+        {
+            Debug.LogWarning("GrenadeWeapon: Không đủ grenade để ném!");
+            return;
+        }
+        
         // Cache hướng ném
         cachedPosition = throwPoint != null ? throwPoint.position : position;
         cachedDirection = direction.normalized;
@@ -81,7 +88,32 @@ public class GrenadeWeapon : IWeapon
         if (Time.time < lastThrowTime + throwCooldown) return false;
         if (isThrowing) return false;
         if (GrenadePool.Instance == null || !GrenadePool.Instance.HasAvailableGrenade()) return false;
+        
+        // Kiểm tra số lượng trong inventory
+        if (InventorySystem.Instance == null || !HasAmmo())
+        {
+            return false;
+        }
+        
         return true;
+    }
+    
+    // IConsumableWeapon implementation
+    public int GetCurrentAmount()
+    {
+        if (InventorySystem.Instance == null) return 0;
+        return InventorySystem.Instance.GetItemAmount(WeaponType.Grenade);
+    }
+    
+    public int GetMaxStack()
+    {
+        if (InventorySystem.Instance == null) return 0;
+        return InventorySystem.Instance.GetMaxStack(WeaponType.Grenade);
+    }
+    
+    public bool HasAmmo()
+    {
+        return GetCurrentAmount() > 0;
     }
     
     public bool IsLockingMovement()

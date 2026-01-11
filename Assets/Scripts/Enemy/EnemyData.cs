@@ -40,6 +40,10 @@ public class EnemyData : ScriptableObject
     [Tooltip("Thời gian đạn tồn tại (giây)")]
     public float bulletLifetime = 3f;
     
+    [Tooltip("Góc lệch đạn tối đa (độ). Đạn sẽ bị lệch ngẫu nhiên trong phạm vi này")]
+    [Range(0f, 45f)]
+    public float bulletSpreadAngle = 5f;
+    
     [Header("Idle/Patrol Settings")]
     [Tooltip("Có patrol không?")]
     public bool canPatrol = false;

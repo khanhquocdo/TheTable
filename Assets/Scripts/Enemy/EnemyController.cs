@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 /// <summary>
 /// Controller chính cho Enemy AI
@@ -22,15 +23,20 @@ public class EnemyController : MonoBehaviour
     [Header("Debug")]
     [SerializeField] private bool showDebugGizmos = true;
     
+    [Header("Bullet Line Settings")]
+    [SerializeField] private float lineFadeTime = 0.15f;       // Thời gian mờ dần
+    
     // Components
     private Rigidbody2D rb;
     private Health health;
+    private LineRenderer lineRenderer;       // Vẽ đường đạn
     
     // State Machine
     private EnemyState currentState;
     private EnemyIdleState idleState;
     private EnemyChaseState chaseState;
     private EnemyAttackState attackState;
+    public Vector2 firePointOffset;
     
     // Player Detection
     private Transform playerTarget;
@@ -51,6 +57,7 @@ public class EnemyController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         health = GetComponent<Health>();
+        lineRenderer = GetComponent<LineRenderer>();
         
         // Validate
         if (enemyData == null)
@@ -70,6 +77,14 @@ public class EnemyController : MonoBehaviour
         if (spriteRenderer == null)
         {
             spriteRenderer = GetComponent<SpriteRenderer>();
+        }
+        
+        // Khởi tạo LineRenderer nếu có
+        if (lineRenderer != null)
+        {
+            lineRenderer.enabled = false;
+            lineRenderer.positionCount = 2;
+            lineRenderer.useWorldSpace = true;
         }
     }
     
@@ -304,7 +319,32 @@ public class EnemyController : MonoBehaviour
     #region Shooting
     
     /// <summary>
-    /// Bắn đạn theo hướng
+    /// Áp dụng độ lệch đạn ngẫu nhiên vào hướng bắn
+    /// </summary>
+    private Vector2 ApplyBulletSpread(Vector2 direction)
+    {
+        // Nếu không có độ lệch, trả về hướng gốc
+        if (enemyData.bulletSpreadAngle <= 0f)
+        {
+            return direction;
+        }
+        
+        // Tính góc hiện tại của hướng bắn
+        float currentAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        
+        // Random góc lệch trong phạm vi [-spreadAngle/2, spreadAngle/2]
+        float randomSpread = Random.Range(-enemyData.bulletSpreadAngle / 2f, enemyData.bulletSpreadAngle / 2f);
+        
+        // Áp dụng góc lệch
+        float finalAngle = currentAngle + randomSpread;
+        float angleInRadians = finalAngle * Mathf.Deg2Rad;
+        
+        // Tính toán hướng mới
+        return new Vector2(Mathf.Cos(angleInRadians), Mathf.Sin(angleInRadians));
+    }
+    
+    /// <summary>
+    /// Bắn đạn theo hướng với độ lệch ngẫu nhiên
     /// </summary>
     public void Shoot(Vector2 direction)
     {
@@ -314,16 +354,64 @@ public class EnemyController : MonoBehaviour
             return;
         }
         
-        Vector2 spawnPosition = firePoint != null ? firePoint.position : transform.position;
+        // Áp dụng độ lệch đạn ngẫu nhiên
+        Vector2 finalDirection = ApplyBulletSpread(direction);
+        
+        Vector2 spawnPosition = firePoint != null ? firePoint.position : transform.position * firePointOffset;
         EnemyBulletPool.Instance.SpawnBullet(
             spawnPosition, 
-            direction, 
+            finalDirection, 
             enemyData.bulletSpeed, 
             enemyData.bulletDamage, 
             enemyData.bulletLifetime,
             enemyData.playerLayer,
             enemyData.obstacleLayer
         );
+        
+        // Vẽ đường đạn
+        if (lineRenderer != null)
+        {
+            Vector3 startPos = spawnPosition;
+            Vector3 endPos;
+            
+            // Vẽ theo hướng bắn thực tế (đã áp dụng độ lệch) với độ dài tối đa
+            float maxLineLength = enemyData.bulletSpeed * enemyData.bulletLifetime;
+            endPos = startPos + (Vector3)(finalDirection.normalized * maxLineLength);
+            
+            StopAllCoroutines();
+            StartCoroutine(DrawBulletLine(startPos, endPos));
+        }
+    }
+    
+    /// <summary>
+    /// Vẽ đường đạn bằng LineRenderer
+    /// </summary>
+    private IEnumerator DrawBulletLine(Vector3 start, Vector3 end)
+    {
+        if (lineRenderer == null) yield break;
+        
+        lineRenderer.enabled = true;
+        lineRenderer.SetPosition(0, start);
+        lineRenderer.SetPosition(1, end);
+
+        // Thiết lập màu ban đầu (luôn reset alpha = 1 mỗi lần bắn)
+        Color startColor = new Color(lineRenderer.material.color.r, lineRenderer.material.color.g, lineRenderer.material.color.b, 1f);
+        Color endColor = new Color(lineRenderer.material.color.r, lineRenderer.material.color.g, lineRenderer.material.color.b, 1f);
+        lineRenderer.startColor = startColor;
+        lineRenderer.endColor = endColor;
+
+        float t = 0f;
+        while (t < lineFadeTime)
+        {
+            t += Time.deltaTime;
+            float alpha = Mathf.Lerp(1f, 0f, t / lineFadeTime);
+            Color c = new Color(lineRenderer.material.color.r, lineRenderer.material.color.g, lineRenderer.material.color.b, alpha);
+            lineRenderer.startColor = c;
+            lineRenderer.endColor = c;
+            yield return null;
+        }
+
+        lineRenderer.enabled = false;
     }
     
     #endregion
@@ -335,20 +423,30 @@ public class EnemyController : MonoBehaviour
         // Dừng tất cả hành vi khi chết
         rb.velocity = Vector2.zero;
         movementDirection = Vector2.zero;
+        
+        // Trigger animation Die trước khi disable
+        Animator anim = GetComponent<Animator>();
+        if (anim != null && anim.enabled)
+        {
+            anim.SetTrigger("IsDie");
+        }
+        
         enabled = false;
         
-        // Disable animation để tối ưu performance
+        // Disable animation sau khi đã trigger (để tối ưu performance)
         // Note: EnemyAnimator component sẽ được disable nếu có
         Component animatorComponent = GetComponent("EnemyAnimator");
         if (animatorComponent != null)
         {
-            // Disable Animator component thay vì EnemyAnimator
-            Animator anim = GetComponent<Animator>();
-            if (anim != null)
+            // Disable EnemyAnimator component để ngừng cập nhật animation
+            if (animatorComponent is MonoBehaviour mb)
             {
-                anim.enabled = false;
+                mb.enabled = false;
             }
         }
+        
+        // Lưu ý: Không disable Animator ngay lập tức để animation Die có thể phát
+        // Animator sẽ được disable sau khi animation Die kết thúc (nếu cần)
     }
     
     #endregion
