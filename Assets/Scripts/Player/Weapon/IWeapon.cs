@@ -56,6 +56,7 @@ public enum WeaponType
     Gun,
     Grenade,
     Molotov,
+    C4,
     SmokeBomb,
     FlashBomb
 }

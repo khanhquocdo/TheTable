@@ -172,6 +172,6 @@ MonoBehaviour:
   fireAreaPrefab: {fileID: 4863354588897294702, guid: a4bd807f6f5810a4089d861db8a07d1b, type: 3}
   fireRadius: 1
   fireDuration: 5
-  breakVFXPrefab: {fileID: 0}
+  breakVFXPrefab: {fileID: 1206498299807332555, guid: af6c1e3f046eecd4d81330aeb285600f, type: 3}
   breakSFX: {fileID: 0}
   spriteRenderer: {fileID: 0}
