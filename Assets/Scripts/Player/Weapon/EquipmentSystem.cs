@@ -110,8 +110,6 @@ public class EquipmentSystem : MonoBehaviour
         
         // Gọi event
         OnSlotChanged?.Invoke(activeSlotIndex, slots[activeSlotIndex]);
-        
-        Debug.Log($"Switched to slot {activeSlotIndex + 1}");
     }
     
     /// <summary>

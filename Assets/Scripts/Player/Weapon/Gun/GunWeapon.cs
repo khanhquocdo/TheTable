@@ -43,13 +43,11 @@ public class GunWeapon : IWeapon
     public void Equip()
     {
         isEquipped = true;
-        Debug.Log("Gun equipped");
     }
     
     public void Unequip()
     {
         isEquipped = false;
-        Debug.Log("Gun unequipped");
     }
     
     public void Use(Vector2 direction, Vector2 position)

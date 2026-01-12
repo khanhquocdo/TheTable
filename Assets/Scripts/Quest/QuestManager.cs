@@ -40,6 +40,36 @@ public class QuestManager : MonoBehaviour
         }
     }
 
+    void Start()
+    {
+        // Subscribe to quest events to show notices
+        OnQuestStarted += HandleQuestStarted;
+        OnQuestCompleted += HandleQuestCompleted;
+    }
+
+    void OnDestroy()
+    {
+        // Unsubscribe from events
+        OnQuestStarted -= HandleQuestStarted;
+        OnQuestCompleted -= HandleQuestCompleted;
+    }
+
+    private void HandleQuestStarted(Quest quest)
+    {
+        if (UINoticeManager.Instance != null)
+        {
+            UINoticeManager.Instance.ShowQuestStarted(quest.questName);
+        }
+    }
+
+    private void HandleQuestCompleted(Quest quest)
+    {
+        if (UINoticeManager.Instance != null)
+        {
+            UINoticeManager.Instance.ShowQuestCompleted(quest.questName);
+        }
+    }
+
     /// <summary>
     /// Initialize the quest database dictionary for quick lookups
     /// </summary>
