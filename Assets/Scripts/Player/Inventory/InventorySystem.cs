@@ -25,6 +25,7 @@ public class InventorySystem : MonoBehaviour
     [Header("Item Settings")]
     [SerializeField] private int grenadeMaxStack = 10;
     [SerializeField] private int molotovMaxStack = 10;
+    [SerializeField] private int c4MaxStack = 5;
     
     // Dictionary để lưu số lượng items
     private Dictionary<WeaponType, ItemData> items = new Dictionary<WeaponType, ItemData>();
@@ -58,6 +59,7 @@ public class InventorySystem : MonoBehaviour
     {
         items[WeaponType.Grenade] = new ItemData(WeaponType.Grenade, grenadeMaxStack);
         items[WeaponType.Molotov] = new ItemData(WeaponType.Molotov, molotovMaxStack);
+        items[WeaponType.C4] = new ItemData(WeaponType.C4, c4MaxStack);
         
         // Có thể thêm các items khác sau này
         // items[WeaponType.SmokeBomb] = new ItemData(WeaponType.SmokeBomb, smokeBombMaxStack);
