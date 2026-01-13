@@ -68,6 +68,12 @@ public class MolotovWeapon : IConsumableWeapon
         cachedPosition = throwPoint != null ? throwPoint.position : position;
         cachedDirection = direction.normalized;
         
+        // Phát audio ném molotov
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayAudio(AudioID.Molotov_Throw, cachedPosition);
+        }
+        
         // Trigger animation
         if (animator != null)
         {

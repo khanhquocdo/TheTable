@@ -20,7 +20,7 @@ public class Molotov : MonoBehaviour
 
     [Header("Visual & Audio")]
     [SerializeField] private GameObject breakVFXPrefab;         // Prefab hiệu ứng vỡ chai (có thể null)
-    [SerializeField] private AudioClip breakSFX;                // Âm thanh vỡ chai (có thể null)
+    // Audio được quản lý bởi AudioManager (AudioID.Molotov_Break)
     [SerializeField] private SpriteRenderer spriteRenderer;     // Sprite của molotov (để ẩn khi vỡ)
 
     private Rigidbody2D rb;
@@ -219,10 +219,10 @@ public class Molotov : MonoBehaviour
     /// </summary>
     private void PlayBreakSFX(Vector2 position)
     {
-        if (breakSFX != null && mainCamera != null)
+        // Sử dụng AudioManager để phát audio
+        if (AudioManager.Instance != null)
         {
-            // Sử dụng AudioSource.PlayClipAtPoint để phát âm thanh tại vị trí
-            AudioSource.PlayClipAtPoint(breakSFX, position);
+            AudioManager.Instance.PlayAudio(AudioID.Molotov_Break, position);
         }
     }
 

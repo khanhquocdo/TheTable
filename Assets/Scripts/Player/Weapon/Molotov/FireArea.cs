@@ -15,15 +15,13 @@ public class FireArea : MonoBehaviour
 
     [Header("Visual & Audio")]
     [SerializeField] private GameObject fireVFXPrefab;          // Prefab hiệu ứng lửa (có thể null)
-    [SerializeField] private AudioClip fireSFX;                 // Âm thanh lửa (có thể null)
-    [SerializeField] private AudioClip burningSFX;              // Âm thanh cháy (có thể null, loop)
-
+    // Audio được quản lý bởi AudioManager (AudioID.Molotov_FireArea_Start, AudioID.Molotov_FireArea_Burning)
+    
     private CircleCollider2D areaCollider;
     private bool isActive = false;
     private float activationTime;
     private float duration;
     private GameObject fireVFXInstance;
-    private AudioSource audioSource;
     private HashSet<Health> enemiesInArea = new HashSet<Health>(); // Track enemies trong vùng
 
     // Events để hook vào các hệ thống khác
@@ -41,15 +39,6 @@ public class FireArea : MonoBehaviour
         }
         areaCollider.isTrigger = true;
         areaCollider.radius = fireRadius;
-
-        // Tạo AudioSource nếu cần
-        audioSource = GetComponent<AudioSource>();
-        if (audioSource == null && (fireSFX != null || burningSFX != null))
-        {
-            audioSource = gameObject.AddComponent<AudioSource>();
-            audioSource.spatialBlend = 1f; // 3D sound
-            audioSource.rolloffMode = AudioRolloffMode.Linear;
-        }
     }
 
     void OnEnable()
@@ -208,20 +197,13 @@ public class FireArea : MonoBehaviour
     /// </summary>
     private void PlayFireSFX()
     {
-        if (audioSource == null) return;
-
-        // Phát âm thanh lửa một lần
-        if (fireSFX != null)
+        if (AudioManager.Instance != null)
         {
-            AudioSource.PlayClipAtPoint(fireSFX, transform.position);
-        }
-
-        // Phát âm thanh cháy loop
-        if (burningSFX != null)
-        {
-            audioSource.clip = burningSFX;
-            audioSource.loop = true;
-            audioSource.Play();
+            // Phát âm thanh bắt đầu cháy (một lần)
+            AudioManager.Instance.PlayAudio(AudioID.Molotov_FireArea_Start, transform.position);
+            
+            // Phát âm thanh cháy liên tục (loop)
+            AudioManager.Instance.PlayAudio(AudioID.Molotov_FireArea_Burning, transform.position);
         }
     }
 
@@ -242,9 +224,10 @@ public class FireArea : MonoBehaviour
     /// </summary>
     private void CleanupSFX()
     {
-        if (audioSource != null)
+        // Dừng audio cháy liên tục (loop)
+        if (AudioManager.Instance != null)
         {
-            audioSource.Stop();
+            AudioManager.Instance.StopAudio(AudioID.Molotov_FireArea_Burning);
         }
     }
 

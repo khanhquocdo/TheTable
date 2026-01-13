@@ -45,6 +45,16 @@ public class Health : MonoBehaviour
         currentHealth -= damage;
         currentHealth = Mathf.Clamp(currentHealth, 0f, maxHealth);
 
+        // Phát audio hurt (trước khi chết)
+        if (currentHealth > 0f && AudioManager.Instance != null)
+        {
+            AudioID hurtAudioID = GetEnemyHurtAudioID();
+            if (hurtAudioID != AudioID.None)
+            {
+                AudioManager.Instance.PlayAudio(hurtAudioID, transform.position);
+            }
+        }
+
         // Gọi events
         OnDamageTaken?.Invoke(damage);
         OnHealthChanged?.Invoke(currentHealth, maxHealth);
@@ -56,6 +66,46 @@ public class Health : MonoBehaviour
         {
             Die();
         }
+    }
+    
+    /// <summary>
+    /// Xác định loại enemy và trả về AudioID hurt tương ứng
+    /// </summary>
+    private AudioID GetEnemyHurtAudioID()
+    {
+        if (GetComponent<MeleeEnemyController>() != null)
+        {
+            return AudioID.Enemy_Melee_Hurt;
+        }
+        else if (GetComponent<TankEnemyController>() != null)
+        {
+            return AudioID.None; // Tank không có hurt sound riêng
+        }
+        else if (GetComponent<EnemyController>() != null)
+        {
+            return AudioID.Enemy_Shooter_Hurt;
+        }
+        return AudioID.None;
+    }
+    
+    /// <summary>
+    /// Xác định loại enemy và trả về AudioID death tương ứng
+    /// </summary>
+    private AudioID GetEnemyDeathAudioID()
+    {
+        if (GetComponent<MeleeEnemyController>() != null)
+        {
+            return AudioID.Enemy_Melee_Death;
+        }
+        else if (GetComponent<TankEnemyController>() != null)
+        {
+            return AudioID.Tank_Death;
+        }
+        else if (GetComponent<EnemyController>() != null)
+        {
+            return AudioID.Enemy_Shooter_Death;
+        }
+        return AudioID.None;
     }
 
     /// <summary>
@@ -102,6 +152,16 @@ public class Health : MonoBehaviour
         if (IsDead == false) return; // Chỉ chết một lần
 
         Debug.Log($"{gameObject.name} đã chết!");
+
+        // Phát audio chết
+        if (AudioManager.Instance != null)
+        {
+            AudioID deathAudioID = GetEnemyDeathAudioID();
+            if (deathAudioID != AudioID.None)
+            {
+                AudioManager.Instance.PlayAudio(deathAudioID, transform.position);
+            }
+        }
 
         // Gọi event chết
         OnDeath?.Invoke();

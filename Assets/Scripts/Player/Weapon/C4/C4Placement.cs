@@ -50,6 +50,15 @@ public class C4Placement : MonoBehaviour
             col.enabled = true;
         }
     }
+    
+    void OnDisable()
+    {
+        // Dừng audio beep khi C4 bị disable (detonate hoặc return to pool)
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopAudio(AudioID.C4_Beep);
+        }
+    }
 
     /// <summary>
     /// Ném hoặc đặt C4
@@ -113,6 +122,12 @@ public class C4Placement : MonoBehaviour
 
         transform.SetParent(target);
         transform.position = target.position;
+        
+        // Phát audio beep loop
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayAudio(AudioID.C4_Beep, transform.position);
+        }
     }
 
     private void StickToSurface()
@@ -131,6 +146,12 @@ public class C4Placement : MonoBehaviour
         }
 
         transform.SetParent(null);
+        
+        // Phát audio beep loop
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayAudio(AudioID.C4_Beep, transform.position);
+        }
     }
 }
 

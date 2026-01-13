@@ -64,6 +64,12 @@ public class TankWeapon : MonoBehaviour
         // Đặt vị trí và hướng
         projectileObj.transform.position = firePoint.position;
         
+        // Phát audio bắn
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayAudio(AudioID.Tank_Fire, firePoint.position);
+        }
+        
         // Lấy hướng từ turret
         Vector2 shootDirection = turret != null ? turret.GetForwardDirection() : transform.right;
         
