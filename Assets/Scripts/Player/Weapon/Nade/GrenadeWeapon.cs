@@ -45,13 +45,11 @@ public class GrenadeWeapon : IConsumableWeapon
     public void Equip()
     {
         isEquipped = true;
-        Debug.Log("Grenade equipped");
     }
     
     public void Unequip()
     {
         isEquipped = false;
-        Debug.Log("Grenade unequipped");
     }
     
     public void Use(Vector2 direction, Vector2 position)
