@@ -127,7 +127,6 @@ public class C4Explosive : MonoBehaviour
             if (health != null)
             {
                 health.TakeDamage(finalDamage);
-                Debug.Log($"{hitCollider.name} nhận {finalDamage:F1} damage từ C4 (khoảng cách: {distance:F2})");
             }
         }
     }

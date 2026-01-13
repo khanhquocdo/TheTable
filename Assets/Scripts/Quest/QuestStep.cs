@@ -26,7 +26,6 @@ public abstract class QuestStep : MonoBehaviour
     public virtual void Activate()
     {
         isCompleted = false;
-        Debug.Log($"[QuestStep] Activated: {stepID} - {stepDescription}");
         OnActivate();
     }
 
@@ -39,7 +38,6 @@ public abstract class QuestStep : MonoBehaviour
         if (isCompleted) return;
 
         isCompleted = true;
-        Debug.Log($"[QuestStep] Completed: {stepID}");
         OnComplete();
     }
 

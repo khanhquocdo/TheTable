@@ -45,13 +45,11 @@ public class C4Weapon : IConsumableWeapon
     public void Equip()
     {
         isEquipped = true;
-        Debug.Log("C4 equipped");
     }
 
     public void Unequip()
     {
         isEquipped = false;
-        Debug.Log("C4 unequipped");
     }
 
     public void Use(Vector2 direction, Vector2 position)

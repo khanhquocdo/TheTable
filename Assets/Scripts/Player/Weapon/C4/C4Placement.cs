@@ -30,7 +30,8 @@ public class C4Placement : MonoBehaviour
 
         if (col != null)
         {
-            col.isTrigger = false;
+            // Dùng trigger để tránh truyền lực va chạm làm văng target
+            col.isTrigger = true;
         }
     }
 
@@ -42,6 +43,11 @@ public class C4Placement : MonoBehaviour
             rb.isKinematic = false;
             rb.velocity = Vector2.zero;
             rb.angularVelocity = 0f;
+        }
+        if (col != null)
+        {
+            col.isTrigger = true;
+            col.enabled = true;
         }
     }
 
@@ -66,7 +72,7 @@ public class C4Placement : MonoBehaviour
         }
     }
 
-    void OnCollisionEnter2D(Collision2D collision)
+    void OnTriggerEnter2D(Collider2D collision)
     {
         if (isAttached) return;
 
@@ -99,6 +105,11 @@ public class C4Placement : MonoBehaviour
             rb.velocity = Vector2.zero;
             rb.isKinematic = true;
         }
+        if (col != null)
+        {
+            col.isTrigger = true;
+            col.enabled = false; // Tắt collider để tránh va chạm tiếp
+        }
 
         transform.SetParent(target);
         transform.position = target.position;
@@ -112,6 +123,11 @@ public class C4Placement : MonoBehaviour
         {
             rb.velocity = Vector2.zero;
             rb.isKinematic = true;
+        }
+        if (col != null)
+        {
+            col.isTrigger = true;
+            col.enabled = false;
         }
 
         transform.SetParent(null);

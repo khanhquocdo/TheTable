@@ -81,11 +81,7 @@ public class MolotovController : MonoBehaviour
                 pool.InitializeFireAreaPool();
             }
         }
-        else
-        {
-            // Nếu pool đã tồn tại, đảm bảo nó có prefab
-            Debug.Log("MolotovController: MolotovPool đã tồn tại. Đảm bảo prefab đã được gán trong Inspector.");
-        }
+        // Nếu pool đã tồn tại, giả định đã được setup đúng trong scene
     }
 
     /// <summary>

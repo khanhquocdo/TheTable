@@ -46,13 +46,11 @@ public class MolotovWeapon : IConsumableWeapon
     public void Equip()
     {
         isEquipped = true;
-        Debug.Log("Molotov equipped");
     }
     
     public void Unequip()
     {
         isEquipped = false;
-        Debug.Log("Molotov unequipped");
     }
     
     public void Use(Vector2 direction, Vector2 position)

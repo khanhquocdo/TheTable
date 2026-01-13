@@ -71,12 +71,7 @@ public class GrenadeController : MonoBehaviour
             // Khởi tạo pool sau khi gán prefab
             pool.InitializePool();
         }
-        else
-        {
-            // Nếu pool đã tồn tại, đảm bảo nó có prefab
-            // (Cần gán thủ công trong Inspector nếu pool được tạo trước)
-            Debug.Log("GrenadeController: GrenadePool đã tồn tại. Đảm bảo prefab đã được gán trong Inspector.");
-        }
+        // Nếu pool đã tồn tại, giả định đã được setup đúng trong scene
     }
 
     /// <summary>
@@ -198,8 +193,6 @@ public class GrenadeController : MonoBehaviour
         }
 
         grenade.Throw(throwDirection, throwPosition);
-
-        Debug.Log($"Ném grenade theo hướng: {throwDirection}");
     }
 
     /// <summary>

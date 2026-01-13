@@ -13,6 +13,7 @@ public class TankMovement : MonoBehaviour
     [Header("Settings")]
     [SerializeField] private float moveSpeed = 2f;
     [SerializeField] private float rotationSpeed = 180f; // Độ/giây
+    [SerializeField] private float rotationOffset = -90f; // Độ lệch góc để điều chỉnh hướng asset (mặc định -90 độ)
     
     private Vector2 movementDirection;
     private bool isMoving = false;
@@ -56,7 +57,8 @@ public class TankMovement : MonoBehaviour
             rb.velocity = movementDirection * moveSpeed;
             
             // Xoay thân xe theo hướng di chuyển
-            float targetAngle = Mathf.Atan2(movementDirection.y, movementDirection.x) * Mathf.Rad2Deg;
+            // Atan2 trả về góc từ trục X dương (hướng phải), cộng thêm offset để điều chỉnh hướng asset
+            float targetAngle = Mathf.Atan2(movementDirection.y, movementDirection.x) * Mathf.Rad2Deg + rotationOffset;
             float currentAngle = transform.eulerAngles.z;
             
             // Tính góc quay ngắn nhất
@@ -98,6 +100,14 @@ public class TankMovement : MonoBehaviour
     public void SetRotationSpeed(float speed)
     {
         rotationSpeed = speed;
+    }
+    
+    /// <summary>
+    /// Set độ lệch góc để điều chỉnh hướng asset
+    /// </summary>
+    public void SetRotationOffset(float offset)
+    {
+        rotationOffset = offset;
     }
     
     /// <summary>

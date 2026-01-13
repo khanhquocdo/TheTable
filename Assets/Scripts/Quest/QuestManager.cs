@@ -40,6 +40,57 @@ public class QuestManager : MonoBehaviour
         }
     }
 
+    void Start()
+    {
+        // Subscribe to quest events to show notices
+        OnQuestStarted += HandleQuestStarted;
+        OnQuestCompleted += HandleQuestCompleted;
+        OnStepChanged += HandleStepChanged;
+        OnStepCompleted += HandleStepCompletedNotice;
+    }
+
+    void OnDestroy()
+    {
+        // Unsubscribe from events
+        OnQuestStarted -= HandleQuestStarted;
+        OnQuestCompleted -= HandleQuestCompleted;
+        OnStepChanged -= HandleStepChanged;
+        OnStepCompleted -= HandleStepCompletedNotice;
+    }
+
+    private void HandleQuestStarted(Quest quest)
+    {
+        if (UINoticeManager.Instance != null)
+        {
+            UINoticeManager.Instance.ShowQuestStarted(quest.questName);
+        }
+    }
+
+    private void HandleQuestCompleted(Quest quest)
+    {
+        if (UINoticeManager.Instance != null)
+        {
+            UINoticeManager.Instance.ShowQuestCompleted(quest.questName);
+        }
+    }
+
+    private void HandleStepChanged(QuestStep step)
+    {
+        if (UINoticeManager.Instance != null && step != null)
+        {
+            UINoticeManager.Instance.ShowStepStarted(step.stepDescription);
+        }
+    }
+
+    // Show notice when a step is completed (separate from core progression)
+    private void HandleStepCompletedNotice(QuestStep step)
+    {
+        if (UINoticeManager.Instance != null && step != null)
+        {
+            UINoticeManager.Instance.ShowStepCompleted(step.stepDescription);
+        }
+    }
+
     /// <summary>
     /// Initialize the quest database dictionary for quick lookups
     /// </summary>
@@ -93,7 +144,6 @@ public class QuestManager : MonoBehaviour
             return false;
         }
 
-        Debug.Log($"[QuestManager] Started quest: {questID}");
         OnQuestStarted?.Invoke(quest);
         return true;
     }
@@ -126,7 +176,6 @@ public class QuestManager : MonoBehaviour
         else
         {
             // Quest completed
-            Debug.Log($"[QuestManager] Quest {activeQuest.questID} completed!");
             OnQuestCompleted?.Invoke(activeQuest);
             activeQuest = null;
         }
