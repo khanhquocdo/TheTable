@@ -318,18 +318,13 @@ public class MeleeEnemyController : MonoBehaviour
         
         // Trigger animation Die trước khi disable
         Animator anim = GetComponent<Animator>();
-        if (anim != null && anim.enabled)
+        if (anim != null)
         {
             anim.SetTrigger("IsDie");
         }
         
         enabled = false;
-        
-        // Disable animation sau khi đã trigger
-        if (meleeAnimator != null)
-        {
-            meleeAnimator.DisableAnimator();
-        }
+    
     }
     
     #endregion
