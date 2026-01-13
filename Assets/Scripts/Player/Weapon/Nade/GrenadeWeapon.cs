@@ -67,6 +67,12 @@ public class GrenadeWeapon : IConsumableWeapon
         cachedPosition = throwPoint != null ? throwPoint.position : position;
         cachedDirection = direction.normalized;
         
+        // Phát audio ném grenade
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayAudio(AudioID.Grenade_Throw, cachedPosition);
+        }
+        
         // Trigger animation
         if (animator != null)
         {

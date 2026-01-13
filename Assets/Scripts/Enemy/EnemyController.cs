@@ -354,10 +354,16 @@ public class EnemyController : MonoBehaviour
             return;
         }
         
+        // Phát audio bắn
+        Vector2 spawnPosition = firePoint != null ? firePoint.position : transform.position * firePointOffset;
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayAudio(AudioID.Enemy_Shooter_Fire, spawnPosition);
+        }
+        
         // Áp dụng độ lệch đạn ngẫu nhiên
         Vector2 finalDirection = ApplyBulletSpread(direction);
         
-        Vector2 spawnPosition = firePoint != null ? firePoint.position : transform.position * firePointOffset;
         EnemyBulletPool.Instance.SpawnBullet(
             spawnPosition, 
             finalDirection, 

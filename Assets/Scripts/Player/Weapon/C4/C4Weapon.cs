@@ -66,7 +66,13 @@ public class C4Weapon : IConsumableWeapon
         // Cache hướng ném
         cachedPosition = throwPoint != null ? (Vector2)throwPoint.position : position;
         cachedDirection = direction.normalized;
-
+        
+        // Phát audio đặt C4
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayAudio(AudioID.C4_Place, cachedPosition);
+        }
+        
         // Trigger animation
         if (animator != null)
         {

@@ -17,7 +17,7 @@ public class Grenade : MonoBehaviour
 
     [Header("Visual & Audio")]
     [SerializeField] private GameObject explosionVFXPrefab;    // Prefab hiệu ứng nổ (có thể null)
-    [SerializeField] private AudioClip explosionSFX;            // Âm thanh nổ (có thể null)
+    // Audio được quản lý bởi AudioManager (AudioID.Grenade_Explosion)
     [SerializeField] private SpriteRenderer spriteRenderer;     // Sprite của grenade (để ẩn khi nổ)
 
     private Rigidbody2D rb;
@@ -185,10 +185,10 @@ public class Grenade : MonoBehaviour
     /// </summary>
     private void PlayExplosionSFX(Vector2 position)
     {
-        if (explosionSFX != null && mainCamera != null)
+        // Sử dụng AudioManager để phát audio
+        if (AudioManager.Instance != null)
         {
-            // Sử dụng AudioSource.PlayClipAtPoint để phát âm thanh tại vị trí
-            AudioSource.PlayClipAtPoint(explosionSFX, position);
+            AudioManager.Instance.PlayAudio(AudioID.Grenade_Explosion, position);
         }
     }
 

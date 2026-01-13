@@ -53,6 +53,7 @@ public class PlayerEquipmentSetup : MonoBehaviour
     [SerializeField] private WeaponType slot1Weapon = WeaponType.Gun;
     [SerializeField] private WeaponType slot2Weapon = WeaponType.Grenade;
     [SerializeField] private WeaponType slot3Weapon = WeaponType.Molotov;
+    [SerializeField] private WeaponType slot4Weapon = WeaponType.C4;
 
     void Start()
     {
@@ -156,6 +157,7 @@ public class PlayerEquipmentSetup : MonoBehaviour
         SetWeaponToSlot(0, slot1Weapon, gunWeapon, grenadeWeapon, molotovWeapon, c4Weapon);
         SetWeaponToSlot(1, slot2Weapon, gunWeapon, grenadeWeapon, molotovWeapon, c4Weapon);
         SetWeaponToSlot(2, slot3Weapon, gunWeapon, grenadeWeapon, molotovWeapon, c4Weapon);
+        SetWeaponToSlot(3, slot4Weapon, gunWeapon, grenadeWeapon, molotovWeapon, c4Weapon);
 
         Debug.Log("Equipment System đã được khởi tạo!");
     }

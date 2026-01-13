@@ -14,7 +14,7 @@ public class C4Pickup : MonoBehaviour
     [Header("Visual Settings")]
     [SerializeField] private SpriteRenderer spriteRenderer;
     [SerializeField] private GameObject pickupEffectPrefab;
-    [SerializeField] private AudioClip pickupSFX;
+    // Audio được quản lý bởi AudioManager (AudioID.UI_Pickup)
 
     [Header("Animation Settings")]
     [SerializeField] private bool enableFloatAnimation = true;
@@ -90,9 +90,9 @@ public class C4Pickup : MonoBehaviour
             }
 
             // Play sound
-            if (pickupSFX != null)
+            if (AudioManager.Instance != null)
             {
-                AudioSource.PlayClipAtPoint(pickupSFX, transform.position);
+                AudioManager.Instance.PlayAudio(AudioID.UI_Pickup, transform.position);
             }
 
             // Ẩn sprite trước khi destroy

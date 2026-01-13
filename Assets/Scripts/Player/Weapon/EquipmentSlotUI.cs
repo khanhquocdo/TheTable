@@ -3,15 +3,15 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// UI hiển thị 3 slot trang bị với icon và highlight
+/// UI hiển thị 4 slot trang bị với icon và highlight
 /// </summary>
 public class EquipmentSlotUI : MonoBehaviour
 {
     [Header("Slot UI References")]
-    [SerializeField] private Image[] slotIcons = new Image[3]; // Icon của từng slot
-    [SerializeField] private Image[] slotBorders = new Image[3]; // Viền highlight của từng slot
-    [SerializeField] private TextMeshProUGUI[] slotNumbers = new TextMeshProUGUI[3]; // Số slot (1, 2, 3)
-    [SerializeField] private TextMeshProUGUI[] slotAmountTexts = new TextMeshProUGUI[3]; // Hiển thị số lượng item (Grenade, Molotov)
+    [SerializeField] private Image[] slotIcons = new Image[4]; // Icon của từng slot
+    [SerializeField] private Image[] slotBorders = new Image[4]; // Viền highlight của từng slot
+    [SerializeField] private TextMeshProUGUI[] slotNumbers = new TextMeshProUGUI[4]; // Số slot (1, 2, 3, 4)
+    [SerializeField] private TextMeshProUGUI[] slotAmountTexts = new TextMeshProUGUI[4]; // Hiển thị số lượng item (Grenade, Molotov, C4, ...)
     
     [Header("Highlight Settings")]
     [SerializeField] private Color normalBorderColor = Color.white;
@@ -80,7 +80,7 @@ public class EquipmentSlotUI : MonoBehaviour
     {
         if (equipmentSystem == null) return;
         
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < slotIcons.Length; i++)
         {
             UpdateSlotUI(i);
         }
@@ -91,7 +91,7 @@ public class EquipmentSlotUI : MonoBehaviour
     /// </summary>
     private void UpdateSlotUI(int slotIndex)
     {
-        if (slotIndex < 0 || slotIndex >= 3) return;
+        if (slotIndex < 0 || slotIndex >= slotIcons.Length) return;
         
         IWeapon weapon = equipmentSystem.GetWeaponInSlot(slotIndex);
         bool isActive = equipmentSystem.ActiveSlotIndex == slotIndex;
@@ -189,7 +189,7 @@ public class EquipmentSlotUI : MonoBehaviour
     /// </summary>
     public void SetSlotIcon(int slotIndex, Image iconImage)
     {
-        if (slotIndex >= 0 && slotIndex < 3)
+        if (slotIndex >= 0 && slotIndex < slotIcons.Length)
         {
             slotIcons[slotIndex] = iconImage;
         }
@@ -197,7 +197,7 @@ public class EquipmentSlotUI : MonoBehaviour
     
     public void SetSlotBorder(int slotIndex, Image borderImage)
     {
-        if (slotIndex >= 0 && slotIndex < 3)
+        if (slotIndex >= 0 && slotIndex < slotBorders.Length)
         {
             slotBorders[slotIndex] = borderImage;
         }
@@ -205,7 +205,7 @@ public class EquipmentSlotUI : MonoBehaviour
     
     public void SetSlotNumber(int slotIndex, TextMeshProUGUI numberText)
     {
-        if (slotIndex >= 0 && slotIndex < 3)
+        if (slotIndex >= 0 && slotIndex < slotNumbers.Length)
         {
             slotNumbers[slotIndex] = numberText;
         }
@@ -213,7 +213,7 @@ public class EquipmentSlotUI : MonoBehaviour
     
     public void SetSlotAmountText(int slotIndex, TextMeshProUGUI amountText)
     {
-        if (slotIndex >= 0 && slotIndex < 3)
+        if (slotIndex >= 0 && slotIndex < slotAmountTexts.Length)
         {
             slotAmountTexts[slotIndex] = amountText;
         }

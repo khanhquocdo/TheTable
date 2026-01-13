@@ -17,7 +17,7 @@ public class C4Explosive : MonoBehaviour
 
     [Header("Visual & Audio")]
     [SerializeField] private GameObject explosionVFXPrefab;
-    [SerializeField] private AudioClip explosionSFX;
+    // Audio được quản lý bởi AudioManager (AudioID.C4_Detonate)
     [SerializeField] private SpriteRenderer spriteRenderer;
 
     private Rigidbody2D rb;
@@ -86,6 +86,12 @@ public class C4Explosive : MonoBehaviour
         hasExploded = true;
         Vector2 explosionPosition = transform.position;
 
+        // Dừng audio beep
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopAudio(AudioID.C4_Beep);
+        }
+
         // Ẩn sprite
         if (spriteRenderer != null)
         {
@@ -142,9 +148,10 @@ public class C4Explosive : MonoBehaviour
 
     private void PlayExplosionSFX(Vector2 position)
     {
-        if (explosionSFX != null)
+        // Sử dụng AudioManager để phát audio
+        if (AudioManager.Instance != null)
         {
-            AudioSource.PlayClipAtPoint(explosionSFX, position);
+            AudioManager.Instance.PlayAudio(AudioID.C4_Detonate, position);
         }
     }
 

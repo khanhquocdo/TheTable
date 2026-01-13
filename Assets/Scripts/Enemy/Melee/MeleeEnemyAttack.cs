@@ -30,6 +30,12 @@ public class MeleeEnemyAttack : MonoBehaviour
     /// </summary>
     public bool PerformAttack(Vector2 attackDirection)
     {
+        // Phát audio tấn công
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayAudio(AudioID.Enemy_Melee_Attack, transform.position);
+        }
+        
         // Tính vị trí hitbox (từ vị trí enemy + offset theo hướng tấn công)
         Vector2 hitboxPosition = (Vector2)transform.position + attackOffset + attackDirection.normalized * (attackRange * 0.5f);
         
@@ -48,6 +54,12 @@ public class MeleeEnemyAttack : MonoBehaviour
                 {
                     playerHealth.TakeDamage(attackDamage);
                     hitPlayer = true;
+                    
+                    // Phát audio đánh trúng
+                    if (AudioManager.Instance != null)
+                    {
+                        AudioManager.Instance.PlayAudio(AudioID.Enemy_Melee_Hit, hitboxPosition);
+                    }
                     
                     Debug.Log($"[MeleeEnemyAttack] {gameObject.name} gây {attackDamage} sát thương cho Player!");
                 }

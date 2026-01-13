@@ -20,6 +20,11 @@ public class TankEnemyController : MonoBehaviour
     [SerializeField] private Transform tankBody; // Transform của thân xe (nếu tách riêng)
     [SerializeField] private Transform tankTurret; // Transform của tháp pháo
     
+    [Header("Death Effects")]
+    [SerializeField] private GameObject deathEffectPrefab; // Prefab particle khi chết
+    [SerializeField] private Transform deathEffectSpawnPoint; // Vị trí spawn hiệu ứng (mặc định là transform)
+    [SerializeField] private float deathEffectLifetime = 2f; // Thời gian tự hủy hiệu ứng
+    
     [Header("Debug")]
     [SerializeField] private bool showDebugGizmos = true;
     
@@ -129,6 +134,14 @@ public class TankEnemyController : MonoBehaviour
         if (currentState != null)
         {
             currentState.FixedUpdate();
+        }
+    }
+    
+    void OnDestroy()
+    {
+        if (health != null)
+        {
+            health.OnDeath -= OnDeath;
         }
     }
     
@@ -412,8 +425,29 @@ public class TankEnemyController : MonoBehaviour
         StopMovement();
         ClearTurretTarget();
         
+        SpawnDeathEffect();
+        
         // Disable controller
         enabled = false;
+    }
+    
+    /// <summary>
+    /// Spawn hiệu ứng particle khi tank chết
+    /// </summary>
+    private void SpawnDeathEffect()
+    {
+        if (deathEffectPrefab == null)
+        {
+            return;
+        }
+        
+        Vector3 spawnPos = deathEffectSpawnPoint != null ? deathEffectSpawnPoint.position : transform.position;
+        GameObject effect = Instantiate(deathEffectPrefab, spawnPos, Quaternion.identity);
+        
+        if (deathEffectLifetime > 0f)
+        {
+            Destroy(effect, deathEffectLifetime);
+        }
     }
     
     #endregion

@@ -103,6 +103,12 @@ public class TankProjectile : MonoBehaviour
     {
         Vector2 explosionPosition = transform.position;
 
+        // Phát audio nổ
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayAudio(AudioID.Tank_Explosion, explosionPosition);
+        }
+
         if (explosionEffectPrefab != null)
         {
             GameObject effect = Instantiate(explosionEffectPrefab, explosionPosition, Quaternion.identity);

@@ -58,6 +58,12 @@ public class GunWeapon : IWeapon
         float fireInterval = 1f / fireRate;
         nextFireTime = Time.time + fireInterval;
         
+        // Phát audio bắn súng
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlayAudio(AudioID.Gun_Fire);
+        }
+        
         // Raycast 2D từ vị trí firePoint về phía direction
         RaycastHit2D hit = Physics2D.Raycast(firePoint.position, direction, attackRange, attackLayerMask);
         
@@ -72,6 +78,12 @@ public class GunWeapon : IWeapon
             {
                 health.TakeDamage(attackDamage);
                 SpawnHitParticle(hit.point, hit.normal, hit.collider.transform);
+                
+                // Phát audio khi bắn trúng
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlayAudio(AudioID.Gun_Hit, hit.point);
+                }
             }
         }
         
