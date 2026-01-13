@@ -46,7 +46,7 @@ public class QuestManager : MonoBehaviour
         OnQuestStarted += HandleQuestStarted;
         OnQuestCompleted += HandleQuestCompleted;
         OnStepChanged += HandleStepChanged;
-        OnStepCompleted += HandleStepCompleted;
+        OnStepCompleted += HandleStepCompletedNotice;
     }
 
     void OnDestroy()
@@ -55,7 +55,7 @@ public class QuestManager : MonoBehaviour
         OnQuestStarted -= HandleQuestStarted;
         OnQuestCompleted -= HandleQuestCompleted;
         OnStepChanged -= HandleStepChanged;
-        OnStepCompleted -= HandleStepCompleted;
+        OnStepCompleted -= HandleStepCompletedNotice;
     }
 
     private void HandleQuestStarted(Quest quest)
@@ -82,7 +82,8 @@ public class QuestManager : MonoBehaviour
         }
     }
 
-    private void HandleStepCompleted(QuestStep step)
+    // Show notice when a step is completed (separate from core progression)
+    private void HandleStepCompletedNotice(QuestStep step)
     {
         if (UINoticeManager.Instance != null && step != null)
         {
