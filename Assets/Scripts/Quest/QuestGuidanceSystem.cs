@@ -85,37 +85,34 @@ public class QuestGuidanceSystem : MonoBehaviour
     }
 
     /// <summary>
-    /// Show a marker at a specific location (e.g., circle on ground)
+    /// Show a marker attached to a GameObject (marker will follow target when it moves)
     /// </summary>
-    public void ShowLocationMarker(Vector3 position)
+    public void ShowLocationMarker(GameObject targetObject)
     {
         ClearLocationMarker();
 
+        if (targetObject == null)
+        {
+            Debug.LogWarning("[QuestGuidanceSystem] Cannot show marker for null target object");
+            return;
+        }
+
         if (locationMarkerPrefab != null)
         {
-            currentLocationMarker = Instantiate(locationMarkerPrefab, position, Quaternion.identity);
+            // Instantiate marker as child of target object so it follows the target
+            currentLocationMarker = Instantiate(locationMarkerPrefab, targetObject.transform);
+            currentLocationMarker.transform.localPosition = Vector3.zero;
+            currentLocationMarker.transform.localRotation = Quaternion.identity;
             currentLocationMarker.transform.localScale = Vector3.one * markerScale;
-            targetTransform = currentLocationMarker.transform;
+            targetTransform = targetObject.transform;
             targetPosition = null;
         }
         else
         {
-            Debug.Log($"[QuestGuidanceSystem] Showing location marker at {position} (No prefab set)");
-            // You can add a simple visual indicator here if needed
-            targetTransform = null;
-            targetPosition = position;
-        }
-    }
-
-    /// <summary>
-    /// Show a marker at a GameObject's position
-    /// </summary>
-    public void ShowLocationMarker(GameObject targetObject)
-    {
-        if (targetObject != null)
-        {
-            ShowLocationMarker(targetObject.transform.position);
+            Debug.Log($"[QuestGuidanceSystem] Showing location marker for {targetObject.name} (No prefab set)");
+            // Set target transform for directional indicator even without prefab
             targetTransform = targetObject.transform;
+            targetPosition = null;
         }
     }
 

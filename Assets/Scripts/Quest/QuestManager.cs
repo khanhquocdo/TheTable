@@ -85,7 +85,7 @@ public class QuestManager : MonoBehaviour
     // Show notice when a step is completed (separate from core progression)
     private void HandleStepCompletedNotice(QuestStep step)
     {
-        if (UINoticeManager.Instance != null && step != null)
+        if (UINoticeManager.Instance != null && step != null && step.showCompletionNotice)
         {
             UINoticeManager.Instance.ShowStepCompleted(step.stepDescription);
         }
@@ -135,6 +135,7 @@ public class QuestManager : MonoBehaviour
         // Activate first step
         if (quest.CurrentStep != null)
         {
+            OnQuestStarted?.Invoke(quest);
             quest.CurrentStep.Activate();
             OnStepChanged?.Invoke(quest.CurrentStep);
         }
@@ -143,8 +144,6 @@ public class QuestManager : MonoBehaviour
             Debug.LogWarning($"[QuestManager] Quest {questID} has no steps!");
             return false;
         }
-
-        OnQuestStarted?.Invoke(quest);
         return true;
     }
 
@@ -242,7 +241,7 @@ public class QuestManager : MonoBehaviour
 
         quest.InitializeSteps();
         quest.LoadFromSaveData(questID, stepIndex);
-        
+
         if (quest.state == QuestState.InProgress)
         {
             activeQuest = quest;

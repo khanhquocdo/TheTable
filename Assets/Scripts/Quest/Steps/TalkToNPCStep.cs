@@ -13,13 +13,28 @@ public class TalkToNPCStep : QuestStep
     [SerializeField] private bool showGuidance = true;
     [SerializeField] private GameObject npcObject;
 
+    void Start()
+    {
+        // Hide NPC object initially if option is enabled
+        if (showTargetOnlyWhenActive && npcObject != null)
+        {
+            npcObject.SetActive(false);
+        }
+    }
+
     protected override void OnActivate()
     {
         // Subscribe to NPC dialog finished event
         QuestEventSystem.OnNPCDialogFinished += HandleNPCDialogFinished;
 
-        // Show guidance if enabled
-        if (showGuidance && npcObject != null && QuestGuidanceSystem.Instance != null)
+        // Show NPC object first if option is enabled
+        if (showTargetOnlyWhenActive && npcObject != null)
+        {
+            npcObject.SetActive(true);
+        }
+
+        // Then show guidance if enabled
+        if (showGuidance && showTargetOnlyWhenActive && npcObject != null && QuestGuidanceSystem.Instance != null)
         {
             QuestGuidanceSystem.Instance.HighlightNPC(npcObject);
         }
@@ -29,6 +44,12 @@ public class TalkToNPCStep : QuestStep
     {
         // Unsubscribe from events
         QuestEventSystem.OnNPCDialogFinished -= HandleNPCDialogFinished;
+
+        // Hide NPC object if option is enabled
+        if (showTargetOnlyWhenActive && npcObject != null)
+        {
+            npcObject.SetActive(false);
+        }
 
         // Clear guidance
         if (QuestGuidanceSystem.Instance != null)
