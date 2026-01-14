@@ -70,8 +70,17 @@ public class EnemyController : MonoBehaviour
             // Tạo firePoint nếu chưa có
             GameObject firePointObj = new GameObject("FirePoint");
             firePointObj.transform.SetParent(transform);
-            firePointObj.transform.localPosition = Vector2.up * 0.5f;
+            // Sử dụng firePointOffset nếu có, nếu không thì dùng giá trị mặc định
+            firePointObj.transform.localPosition = firePointOffset != Vector2.zero ? firePointOffset : Vector2.up * 0.5f;
             firePoint = firePointObj.transform;
+        }
+        else
+        {
+            // Đảm bảo firePoint có vị trí ban đầu dựa trên offset
+            if (firePointOffset != Vector2.zero)
+            {
+                firePoint.localPosition = firePointOffset;
+            }
         }
         
         if (spriteRenderer == null)
@@ -306,11 +315,17 @@ public class EnemyController : MonoBehaviour
         //     spriteRenderer.flipX = direction.x < 0;
         // }
         
-        // Quay firePoint về hướng target
+        // Quay firePoint về hướng target và điều chỉnh vị trí theo offset
         if (firePoint != null)
         {
             float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
             firePoint.rotation = Quaternion.Euler(0, 0, angle);
+            
+            // Điều chỉnh vị trí firePoint dựa trên hướng nhìn và offset
+            if (firePointOffset != Vector2.zero)
+            {
+                firePoint.localPosition = direction * firePointOffset.magnitude;
+            }
         }
     }
     
@@ -355,7 +370,7 @@ public class EnemyController : MonoBehaviour
         }
         
         // Phát audio bắn
-        Vector2 spawnPosition = firePoint != null ? firePoint.position : transform.position * firePointOffset;
+        Vector2 spawnPosition = firePoint != null ? firePoint.position : (Vector2)transform.position + firePointOffset;
         if (AudioManager.Instance != null)
         {
             AudioManager.Instance.PlayAudio(AudioID.Enemy_Shooter_Fire, spawnPosition);

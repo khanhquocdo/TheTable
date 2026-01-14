@@ -35,6 +35,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Hit Effect Settings")]
     public GameObject hitParticlePrefab;   // Particle System prefab khi bắn trúng
+    public GameObject tankHitParticlePrefab; // Particle System prefab riêng khi bắn Tank
     public float particleLifetime = 2f;      // Thời gian tồn tại của particle (nếu prefab không tự hủy)
 
     private float nextFireTime = 0f;         // Thời gian được phép bắn tiếp theo
@@ -339,10 +340,21 @@ public class PlayerMovement : MonoBehaviour
     /// <param name="parentTransform">Transform của Enemy để set làm parent của particle</param>
     private void SpawnHitParticle(Vector2 hitPoint, Vector2 hitNormal, Transform parentTransform = null)
     {
-        if (hitParticlePrefab == null) return;
+        // Kiểm tra nếu đối tượng bị bắn là Tank
+        GameObject particlePrefab = hitParticlePrefab;
+        if (parentTransform != null)
+        {
+            TankEnemyController tankController = parentTransform.GetComponent<TankEnemyController>();
+            if (tankController != null && tankHitParticlePrefab != null)
+            {
+                particlePrefab = tankHitParticlePrefab;
+            }
+        }
+        
+        if (particlePrefab == null) return;
 
         // Spawn particle tại vị trí bắn trúng
-        GameObject particleInstance = Instantiate(hitParticlePrefab, hitPoint, Quaternion.identity);
+        GameObject particleInstance = Instantiate(particlePrefab, hitPoint, Quaternion.identity);
         
         // Set particle làm child của Enemy nếu có parentTransform
         if (parentTransform != null)
