@@ -25,6 +25,7 @@ public class PlayerEquipmentSetup : MonoBehaviour
     [SerializeField] private Sprite gunIcon;
     [SerializeField] private float gunLineFadeTime = 0.15f;
     [SerializeField] private GameObject gunHitParticlePrefab;
+    [SerializeField] private GameObject gunTankHitParticlePrefab; // Particle riêng khi bắn Tank
     [SerializeField] private float gunParticleLifetime = 2f;
 
     [Header("Grenade Weapon Settings")]
@@ -116,6 +117,7 @@ public class PlayerEquipmentSetup : MonoBehaviour
             weaponIcon = gunIcon,
             lineFadeTime = gunLineFadeTime,
             hitParticlePrefab = gunHitParticlePrefab,
+            tankHitParticlePrefab = gunTankHitParticlePrefab,
             particleLifetime = gunParticleLifetime
         };
 

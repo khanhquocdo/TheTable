@@ -16,6 +16,7 @@ public class GunWeapon : IWeapon
     public Sprite weaponIcon;
     public float lineFadeTime = 0.15f;
     public GameObject hitParticlePrefab;
+    public GameObject tankHitParticlePrefab; // Particle system riêng khi bắn Tank
     public float particleLifetime = 2f;
     
     // References
@@ -108,9 +109,20 @@ public class GunWeapon : IWeapon
     
     private void SpawnHitParticle(Vector2 hitPoint, Vector2 hitNormal, Transform parentTransform = null)
     {
-        if (hitParticlePrefab == null) return;
+        // Kiểm tra nếu đối tượng bị bắn là Tank
+        GameObject particlePrefab = hitParticlePrefab;
+        if (parentTransform != null)
+        {
+            TankEnemyController tankController = parentTransform.GetComponent<TankEnemyController>();
+            if (tankController != null && tankHitParticlePrefab != null)
+            {
+                particlePrefab = tankHitParticlePrefab;
+            }
+        }
         
-        GameObject particleInstance = Object.Instantiate(hitParticlePrefab, hitPoint, Quaternion.identity);
+        if (particlePrefab == null) return;
+        
+        GameObject particleInstance = Object.Instantiate(particlePrefab, hitPoint, Quaternion.identity);
         
         // Set particle làm child của Enemy nếu có parentTransform
         if (parentTransform != null)

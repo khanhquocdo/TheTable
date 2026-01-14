@@ -21,10 +21,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   attackRange: 0.47
-  attackDamage: 1
+  attackDamage: 0
   windUpTime: 0.35
-  attackCooldown: 1
-  attackDuration: 0.5
+  attackCooldown: 0.9
+  attackDuration: 0.3
   canPatrol: 1
   patrolRadius: 5
   idleTime: 2

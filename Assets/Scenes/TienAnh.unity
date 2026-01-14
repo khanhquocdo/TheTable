@@ -148,7 +148,7 @@ Transform:
   m_GameObject: {fileID: 28979496}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.03, y: 0.26, z: 0}
+  m_LocalPosition: {x: -0.03, y: 0.97, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -255,12 +255,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   firePoint: {fileID: 1591621820}
   fireRate: 1
-  projectileSpeed: 8
+  projectileSpeed: 15
   projectileDamage: 30
   projectileLifetime: 5
   explosionRadius: 3
   minDamage: 5
-  damageThroughObstacles: 0
+  damageThroughObstacles: 1
   playerLayer:
     serializedVersion: 2
     m_Bits: 8
@@ -5569,6 +5569,10 @@ PrefabInstance:
       propertyPath: slot3Weapon
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 3503010931331313128, guid: 13f2b4e6e3b84644187af713351c966f, type: 3}
+      propertyPath: gunTankHitParticlePrefab
+      value: 
+      objectReference: {fileID: 2504214343621411470, guid: 3ed0d324122d7b24eaec75c55c74aafc, type: 3}
     - target: {fileID: 3886959826157827423, guid: 13f2b4e6e3b84644187af713351c966f, type: 3}
       propertyPath: particleLifetime
       value: 0.1
