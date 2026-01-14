@@ -13,21 +13,36 @@ public class GoToLocationStep : QuestStep
     [SerializeField] private bool showGuidance = true;
     [SerializeField] private Transform locationMarker;
 
+    void Start()
+    {
+        // Hide target marker initially if option is enabled
+        if (showTargetOnlyWhenActive && locationMarker != null)
+        {
+            locationMarker.gameObject.SetActive(false);
+        }
+    }
+
     protected override void OnActivate()
     {
         // Subscribe to player enter area event
         QuestEventSystem.OnPlayerEnterArea += HandlePlayerEnterArea;
 
-        // Show guidance marker if enabled
-        if (showGuidance && QuestGuidanceSystem.Instance != null)
+        // Show target marker first if option is enabled
+        if (showTargetOnlyWhenActive && locationMarker != null)
+        {
+            locationMarker.gameObject.SetActive(true);
+        }
+
+        // Then show guidance marker if enabled
+        if (showGuidance && showTargetOnlyWhenActive && QuestGuidanceSystem.Instance != null)
         {
             if (locationMarker != null)
             {
-                QuestGuidanceSystem.Instance.ShowLocationMarker(locationMarker.position);
+                QuestGuidanceSystem.Instance.ShowLocationMarker(locationMarker.gameObject);
             }
             else if (transform != null)
             {
-                QuestGuidanceSystem.Instance.ShowLocationMarker(transform.position);
+                QuestGuidanceSystem.Instance.ShowLocationMarker(gameObject);
             }
         }
     }
@@ -36,6 +51,12 @@ public class GoToLocationStep : QuestStep
     {
         // Unsubscribe from events
         QuestEventSystem.OnPlayerEnterArea -= HandlePlayerEnterArea;
+
+        // Hide target marker if option is enabled
+        if (showTargetOnlyWhenActive && locationMarker != null)
+        {
+            locationMarker.gameObject.SetActive(false);
+        }
 
         // Clear guidance
         if (QuestGuidanceSystem.Instance != null)

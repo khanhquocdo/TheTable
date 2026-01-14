@@ -12,6 +12,14 @@ public abstract class QuestStep : MonoBehaviour
     public string stepID;
     public string stepDescription;
 
+    [Header("Target Display")]
+    [Tooltip("Only show target (guidance/highlight) when this step is active")]
+    [SerializeField] protected bool showTargetOnlyWhenActive = true;
+
+    [Header("Notice Settings")]
+    [Tooltip("Show completion notice when step is completed. Default: true (shows both start and completion)")]
+    [SerializeField] public bool showCompletionNotice = true;
+
     protected bool isCompleted = false;
 
     /// <summary>

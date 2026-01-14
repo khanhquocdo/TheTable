@@ -14,19 +14,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   moveSpeed: 3
   minDistance: 1.67
-  maxAttackDistance: 6.87
-  detectRadius: 8.46
+  maxAttackDistance: 6
+  detectRadius: 8
   playerLayer:
     serializedVersion: 2
     m_Bits: 8
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 128
-  fireRate: 8.01
-  bulletDamage: 0
-  bulletSpeed: 23.73
+  fireRate: 3
+  bulletDamage: 3
+  bulletSpeed: 10
   bulletLifetime: 3
-  bulletSpreadAngle: 23.9
+  bulletSpreadAngle: 30
   canPatrol: 1
   patrolRadius: 5
   idleTime: 5
