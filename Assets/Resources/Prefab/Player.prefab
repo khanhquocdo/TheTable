@@ -210,6 +210,7 @@ GameObject:
   - component: {fileID: 4101244990309421372}
   - component: {fileID: 4668191842220274544}
   - component: {fileID: 1524339677295340598}
+  - component: {fileID: 5803219514224418901}
   m_Layer: 3
   m_Name: Player
   m_TagString: Player
@@ -422,7 +423,7 @@ LineRenderer:
       m_Curve:
       - serializedVersion: 3
         time: 0
-        value: 0.029844195
+        value: 0.011869341
         inSlope: 0
         outSlope: 0
         tangentMode: 0
@@ -504,11 +505,13 @@ MonoBehaviour:
     m_Bits: 64
   fireRate: 5
   lineFadeTime: 0.5
+  lineSpeed: 30
   hitParticlePrefab: {fileID: 478665243661048075, guid: e347c5bf3b29a1643987f237c554655b, type: 3}
   tankHitParticlePrefab: {fileID: 0}
   particleLifetime: 0.1
   firePoint: {fileID: 6606347979354272500}
-  firePointOffset: {x: 0.3, y: 0.2, z: 0}
+  firePointOffset: {x: 0.5, y: 0.35, z: 0}
+  footstepInterval: 100
 --- !u!114 &2354134343259240984
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -622,8 +625,9 @@ MonoBehaviour:
   gunIcon: {fileID: -1973919787, guid: 119e2a9c96f0275479317980a02c75ae, type: 3}
   gunLineFadeTime: 0.15
   gunHitParticlePrefab: {fileID: 478665243661048075, guid: e347c5bf3b29a1643987f237c554655b, type: 3}
-  gunTankHitParticlePrefab: {fileID: 2504214343621411470, guid: 3ed0d324122d7b24eaec75c55c74aafc, type: 3}
+  gunTankHitParticlePrefab: {fileID: 5880797563127281583, guid: 265d3a5ba69981a4698ceabcedf368b0, type: 3}
   gunParticleLifetime: 2
+  gunWeaponAmmoData: {fileID: 11400000, guid: b7463d7022506d44b9f53bb5ea671685, type: 2}
   grenadePrefab: {fileID: 8131869721310074047, guid: 2cda5f071dba11346aa4467c620b054d, type: 3}
   grenadeThrowCooldown: 1
   grenadeThrowAnimationDuration: 0.5
@@ -694,6 +698,20 @@ MonoBehaviour:
   grenadeMaxStack: 10
   molotovMaxStack: 10
   c4MaxStack: 5
+--- !u!114 &5803219514224418901
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2030722827104836253}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 99bdbe2b72d0eb545a1efe121ea8a7c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ammoDataList:
+  - {fileID: 11400000, guid: eb6f582f88d992c438a9d54d47c44056, type: 2}
 --- !u!1 &4180512539289042283
 GameObject:
   m_ObjectHideFlags: 0
