@@ -2025,25 +2025,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 2030722827104836253, guid: 13f2b4e6e3b84644187af713351c966f, type: 3}
   m_PrefabInstance: {fileID: 308503903972898994}
   m_PrefabAsset: {fileID: 0}
---- !u!320 &918594529
-PlayableDirector:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 918594515}
-  m_Enabled: 1
-  serializedVersion: 3
-  m_PlayableAsset: {fileID: 11400000, guid: 530050b5ba765764cac5262657c78985, type: 2}
-  m_InitialState: 1
-  m_WrapMode: 2
-  m_DirectorUpdateMode: 1
-  m_InitialTime: 0
-  m_SceneBindings:
-  - key: {fileID: -7003485583505465809, guid: 530050b5ba765764cac5262657c78985, type: 2}
-    value: {fileID: 918594515}
-  m_ExposedReferences:
-    m_References: []
 --- !u!1 &957107944
 GameObject:
   m_ObjectHideFlags: 0
@@ -5523,10 +5504,6 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3503010931331313128, guid: 13f2b4e6e3b84644187af713351c966f, type: 3}
-      propertyPath: c4Data
-      value: 
-      objectReference: {fileID: 11400000, guid: bffe1c2e610c76f40a756104b4b020c6, type: 2}
-    - target: {fileID: 3503010931331313128, guid: 13f2b4e6e3b84644187af713351c966f, type: 3}
       propertyPath: c4Icon
       value: 
       objectReference: {fileID: 21300000, guid: e3489e2e6d204a44598d4fdc1e1f1b6e, type: 3}
@@ -5539,10 +5516,6 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1576515812487278857, guid: 3fedfbaf906bcd74bb250cfa53505093, type: 3}
     - target: {fileID: 3503010931331313128, guid: 13f2b4e6e3b84644187af713351c966f, type: 3}
-      propertyPath: c4PlaceMode
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 3503010931331313128, guid: 13f2b4e6e3b84644187af713351c966f, type: 3}
       propertyPath: grenadeIcon
       value: 
       objectReference: {fileID: 755891901, guid: 4f6ed8e97a1efb44c859e809cc05b29b, type: 3}
@@ -5550,17 +5523,9 @@ PrefabInstance:
       propertyPath: molotovIcon
       value: 
       objectReference: {fileID: 2128058124, guid: 4f6ed8e97a1efb44c859e809cc05b29b, type: 3}
-    - target: {fileID: 3503010931331313128, guid: 13f2b4e6e3b84644187af713351c966f, type: 3}
-      propertyPath: slot3Weapon
-      value: 2
-      objectReference: {fileID: 0}
     - target: {fileID: 3886959826157827423, guid: 13f2b4e6e3b84644187af713351c966f, type: 3}
       propertyPath: particleLifetime
       value: 0.1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4101244990309421372, guid: 13f2b4e6e3b84644187af713351c966f, type: 3}
-      propertyPath: maxHealth
-      value: 100
       objectReference: {fileID: 0}
     - target: {fileID: 4101244990309421372, guid: 13f2b4e6e3b84644187af713351c966f, type: 3}
       propertyPath: deathDelay
@@ -5581,10 +5546,7 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents:
-    - targetCorrespondingSourceObject: {fileID: 2030722827104836253, guid: 13f2b4e6e3b84644187af713351c966f, type: 3}
-      insertIndex: 13
-      addedObject: {fileID: 918594529}
+    m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 13f2b4e6e3b84644187af713351c966f, type: 3}
 --- !u!1 &417655870836964546
 GameObject:

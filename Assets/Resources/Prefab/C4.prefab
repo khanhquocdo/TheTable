@@ -181,7 +181,6 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 64
   explosionVFXPrefab: {fileID: 725748389856807714, guid: 4bda94453d2ca7444a0fff05b2d425f5, type: 3}
-  explosionSFX: {fileID: 0}
   spriteRenderer: {fileID: 0}
 --- !u!114 &5651893879948116964
 MonoBehaviour:
