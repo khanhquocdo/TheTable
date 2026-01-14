@@ -14,12 +14,9 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 movement;
     public float deadZone = 0.1f;
 
-
-
-
     private Animator ani;
     public Camera cam;
-    
+
     // Health System
     private Health health;
 
@@ -32,6 +29,7 @@ public class PlayerMovement : MonoBehaviour
     [Header("Bullet Line Settings")]
 
     public float lineFadeTime = 0.15f;       // Thời gian mờ dần
+    public float lineSpeed = 30f;     // Khoảng cách tối đa để vẽ đường đạn
 
     [Header("Hit Effect Settings")]
     public GameObject hitParticlePrefab;   // Particle System prefab khi bắn trúng
@@ -57,7 +55,7 @@ public class PlayerMovement : MonoBehaviour
             lineRenderer.useWorldSpace = true;
         }
     }
-    
+
     void Start()
     {
         // Subscribe to health events
@@ -67,7 +65,7 @@ public class PlayerMovement : MonoBehaviour
             health.OnDamageTaken += OnPlayerDamageTaken;
         }
     }
-    
+
     void OnDestroy()
     {
         // Unsubscribe from health events
@@ -87,7 +85,7 @@ public class PlayerMovement : MonoBehaviour
             rb.velocity = Vector2.zero;
             return;
         }
-        
+
         // Kiểm tra nếu weapon hiện tại đang lock movement
         bool isLockingMovement = false;
         var equipmentSystem = GetEquipmentSystem();
@@ -99,13 +97,13 @@ public class PlayerMovement : MonoBehaviour
                 isLockingMovement = (bool)method.Invoke(equipmentSystem, null);
             }
         }
-        
+
         // Fallback: Kiểm tra nếu đang ném grenade hoặc molotov (cho tương thích ngược)
         if (GrenadeController.IsThrowingGrenade || MolotovController.IsThrowingMolotov)
         {
             isLockingMovement = true;
         }
-        
+
         if (isLockingMovement)
         {
             movement = Vector2.zero;
@@ -131,7 +129,7 @@ public class PlayerMovement : MonoBehaviour
         ani.SetBool("IsAttackRun", isAttackRun);
         ani.SetBool("IsAttackIdle", isAttackIdle);
         CalculateAnimation();
-        
+
         // Sử dụng EquipmentSystem nếu có, nếu không thì dùng logic cũ
         var equipmentSystemForAttack = GetEquipmentSystem();
         if (equipmentSystemForAttack != null)
@@ -143,7 +141,7 @@ public class PlayerMovement : MonoBehaviour
             HandleShooting();
         }
     }
-    
+
     // Helper method để tránh lỗi compile khi EquipmentSystem chưa được compile
     private MonoBehaviour GetEquipmentSystem()
     {
@@ -167,13 +165,13 @@ public class PlayerMovement : MonoBehaviour
                 isLockingMovement = (bool)method.Invoke(equipmentSystem, null);
             }
         }
-        
+
         // Fallback: Kiểm tra nếu đang ném grenade hoặc molotov (cho tương thích ngược)
         if (GrenadeController.IsThrowingGrenade || MolotovController.IsThrowingMolotov)
         {
             isLockingMovement = true;
         }
-        
+
         if (isLockingMovement)
         {
             rb.velocity = Vector2.zero;
@@ -212,27 +210,27 @@ public class PlayerMovement : MonoBehaviour
         {
             return;
         }
-        
+
         var equipmentSystem = GetEquipmentSystem();
         if (equipmentSystem == null)
         {
             return;
         }
-        
+
         var currentWeaponProp = equipmentSystem.GetType().GetProperty("CurrentWeapon");
         if (currentWeaponProp == null || currentWeaponProp.GetValue(equipmentSystem) == null)
         {
             return;
         }
-        
+
         // Tính hướng tấn công từ player đến chuột
         Vector3 mouseWorld = cam.ScreenToWorldPoint(Input.mousePosition);
         Vector2 direction = mouseWorld - transform.position;
         direction.Normalize();
-        
+
         // Lấy vị trí xuất phát
         Vector2 attackPosition = firePoint != null ? firePoint.position : transform.position;
-        
+
         // Sử dụng weapon hiện tại
         var useMethod = equipmentSystem.GetType().GetMethod("UseCurrentWeapon");
         if (useMethod != null)
@@ -240,7 +238,7 @@ public class PlayerMovement : MonoBehaviour
             useMethod.Invoke(equipmentSystem, new object[] { direction, attackPosition });
         }
     }
-    
+
     /// <summary>
     /// Xử lý bắn đạn bằng Raycast theo hướng trỏ chuột + fire rate (logic cũ, dùng khi không có EquipmentSystem)
     /// </summary>
@@ -281,7 +279,7 @@ public class PlayerMovement : MonoBehaviour
             if (health != null)
             {
                 health.TakeDamage(attackDamage);
-                
+
                 // Spawn particle system tại vị trí bắn trúng và set làm child của Enemy
                 SpawnHitParticle(hit.point, hit.normal, hit.collider.transform);
             }
@@ -307,8 +305,9 @@ public class PlayerMovement : MonoBehaviour
     public IEnumerator DrawBulletLine(Vector3 start, Vector3 end)
     {
         if (lineRenderer == null) yield break;
-        
+
         lineRenderer.enabled = true;
+        Vector3 direction = end - start;
         lineRenderer.SetPosition(0, start);
         lineRenderer.SetPosition(1, end);
 
@@ -321,6 +320,13 @@ public class PlayerMovement : MonoBehaviour
         float t = 0f;
         while (t < lineFadeTime)
         {
+            // Cần hạn chế để start không vượt quá end
+            float distance = Vector3.Distance(start, end);
+            if (distance > 0.2f)
+            {
+                start += direction.normalized * Time.deltaTime * lineSpeed;
+            }
+            lineRenderer.SetPosition(0, start);
             t += Time.deltaTime;
             float alpha = Mathf.Lerp(1f, 0f, t / lineFadeTime);
             Color c = new Color(lineRenderer.material.color.r, lineRenderer.material.color.g, lineRenderer.material.color.b, alpha);
@@ -350,18 +356,18 @@ public class PlayerMovement : MonoBehaviour
                 particlePrefab = tankHitParticlePrefab;
             }
         }
-        
+
         if (particlePrefab == null) return;
 
         // Spawn particle tại vị trí bắn trúng
         GameObject particleInstance = Instantiate(particlePrefab, hitPoint, Quaternion.identity);
-        
+
         // Set particle làm child của Enemy nếu có parentTransform
         if (parentTransform != null)
         {
             particleInstance.transform.SetParent(parentTransform);
         }
-        
+
         // Xoay particle theo hướng pháp tuyến (nếu cần)
         if (hitNormal != Vector2.zero)
         {
@@ -382,9 +388,9 @@ public class PlayerMovement : MonoBehaviour
             Destroy(particleInstance, particleLifetime);
         }
     }
-    
+
     #region Health System
-    
+
     /// <summary>
     /// Xử lý khi player nhận sát thương
     /// </summary>
@@ -393,33 +399,33 @@ public class PlayerMovement : MonoBehaviour
         // Có thể thêm hiệu ứng như màn hình đỏ, camera shake, v.v.
         Debug.Log($"Player nhận {damage} sát thương!");
     }
-    
+
     /// <summary>
     /// Xử lý khi player chết
     /// </summary>
     private void OnPlayerDeath()
     {
         Debug.Log("Player đã chết!");
-        
+
         // Dừng di chuyển
         rb.velocity = Vector2.zero;
         movement = Vector2.zero;
-        
+
         // Trigger animation Die
         if (ani != null)
         {
             ani.SetTrigger("IsDie");
         }
-        
+
         // Disable movement và attack
         enabled = false;
-        
+
         // Có thể thêm logic khác như:
         // - Hiển thị Game Over UI
         // - Respawn sau một khoảng thời gian
         // - V.v.
     }
-    
+
     /// <summary>
     /// Lấy Health component (public để các script khác có thể truy cập)
     /// </summary>
@@ -427,7 +433,7 @@ public class PlayerMovement : MonoBehaviour
     {
         return health;
     }
-    
+
     #endregion
 
 }
