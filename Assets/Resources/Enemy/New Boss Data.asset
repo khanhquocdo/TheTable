@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b82f536defbed34449a5015ece031426, type: 3}
+  m_Name: New Boss Data
+  m_EditorClassIdentifier: 
+  moveSpeed: 2
+  detectRadius: 15
+  playerLayer:
+    serializedVersion: 2
+    m_Bits: 8
+  obstacleLayer:
+    serializedVersion: 2
+    m_Bits: 128
+  meleeDamage: 20
+  meleeRange: 2.5
+  meleeCooldown: 2
+  fireRate: 3
+  bulletDamage: 15
+  bulletSpeed: 12
+  bulletLifetime: 4
+  bulletSpreadAngle: 8
+  laserDamage: 30
+  laserChargeTime: 1.5
+  laserActiveTime: 2
+  laserRange: 10
+  laserCooldown: 5
+  shieldChargeTime: 1
+  shieldActiveTime: 3
+  shieldCooldown: 8
+  idleDuration: 1
+  immuneDuration: 2
+  glowDuration: 1
+  phase2HealthThreshold: 0.5
+  phase3HealthThreshold: 0.25
