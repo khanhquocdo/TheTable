@@ -27,6 +27,7 @@ public class PlayerEquipmentSetup : MonoBehaviour
     [SerializeField] private GameObject gunHitParticlePrefab;
     [SerializeField] private GameObject gunTankHitParticlePrefab; // Particle riêng khi bắn Tank
     [SerializeField] private float gunParticleLifetime = 2f;
+    [SerializeField] private WeaponAmmoData gunWeaponAmmoData; // Dữ liệu ammo cho Gun Weapon
 
     [Header("Grenade Weapon Settings")]
     [SerializeField] private GameObject grenadePrefab;
@@ -114,6 +115,7 @@ public class PlayerEquipmentSetup : MonoBehaviour
             attackDamage = gunAttackDamage,
             attackLayerMask = gunAttackLayerMask,
             fireRate = gunFireRate,
+            weaponAmmoData = gunWeaponAmmoData, // Gán WeaponAmmoData
             weaponIcon = gunIcon,
             lineFadeTime = gunLineFadeTime,
             hitParticlePrefab = gunHitParticlePrefab,

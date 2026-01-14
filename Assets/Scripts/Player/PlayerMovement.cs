@@ -41,6 +41,12 @@ public class PlayerMovement : MonoBehaviour
     public Transform firePoint;
     public Vector3 firePointOffset;
 
+    [Header("Audio Settings")]
+    [Tooltip("Thời gian giữa 2 tiếng bước chân khi đang di chuyển")]
+    public float footstepInterval = 0.35f;
+    private float footstepTimer = 0f;
+    private bool wasMoving = false; // Track trạng thái di chuyển trước đó
+
     void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
@@ -123,11 +129,17 @@ public class PlayerMovement : MonoBehaviour
         bool isHoldingAttack = Input.GetMouseButton(0);
 
         // ===== ATTACK STATES =====
-        bool isAttackRun = isMoving && isHoldingAttack;
-        bool isAttackIdle = !isMoving && !isHoldingAttack;
+        // Kiểm tra xem có nên lock animation attack không (khi đang reload hoặc hết đạn ở slot Gun)
+        bool shouldLockAttackAnimation = ShouldLockAttackAnimation();
+        
+        bool isAttackRun = !shouldLockAttackAnimation && isMoving && isHoldingAttack;
+        bool isAttackIdle = !shouldLockAttackAnimation && !isMoving && !isHoldingAttack;
 
         ani.SetBool("IsAttackRun", isAttackRun);
         ani.SetBool("IsAttackIdle", isAttackIdle);
+
+        // Audio bước chân
+        HandleFootstepAudio(isMoving);
         CalculateAnimation();
 
         // Sử dụng EquipmentSystem nếu có, nếu không thì dùng logic cũ
@@ -200,17 +212,14 @@ public class PlayerMovement : MonoBehaviour
         firePoint.localPosition = lookDirection * firePointOffset.magnitude;
     }
 
+    // Track trạng thái chuột để xử lý Single mode
+    private bool wasHoldingFireButton = false;
+    
     /// <summary>
     /// Xử lý tấn công bằng weapon hiện tại từ EquipmentSystem
     /// </summary>
     void HandleWeaponAttack()
     {
-        // Giữ chuột trái để tấn công
-        if (Input.GetMouseButton(0) == false)
-        {
-            return;
-        }
-
         var equipmentSystem = GetEquipmentSystem();
         if (equipmentSystem == null)
         {
@@ -219,6 +228,35 @@ public class PlayerMovement : MonoBehaviour
 
         var currentWeaponProp = equipmentSystem.GetType().GetProperty("CurrentWeapon");
         if (currentWeaponProp == null || currentWeaponProp.GetValue(equipmentSystem) == null)
+        {
+            return;
+        }
+        
+        var currentWeapon = currentWeaponProp.GetValue(equipmentSystem);
+        bool isHoldingFireButton = Input.GetMouseButton(0);
+        
+        // Xử lý Single mode: reset khi thả chuột
+        if (wasHoldingFireButton && !isHoldingFireButton)
+        {
+            // Gọi OnFireButtonReleased nếu weapon có method này
+            var onFireButtonReleasedMethod = currentWeapon.GetType().GetMethod("OnFireButtonReleased");
+            if (onFireButtonReleasedMethod != null)
+            {
+                onFireButtonReleasedMethod.Invoke(currentWeapon, null);
+            }
+        }
+        
+        wasHoldingFireButton = isHoldingFireButton;
+        
+        // Xử lý reload (phím R)
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            HandleReload();
+            return;
+        }
+        
+        // Giữ chuột trái để tấn công
+        if (!isHoldingFireButton)
         {
             return;
         }
@@ -236,6 +274,75 @@ public class PlayerMovement : MonoBehaviour
         if (useMethod != null)
         {
             useMethod.Invoke(equipmentSystem, new object[] { direction, attackPosition });
+        }
+    }
+    
+    /// <summary>
+    /// Kiểm tra xem có nên lock animation attack không
+    /// Lock khi đang reload hoặc hết đạn và đang ở slot Gun
+    /// </summary>
+    bool ShouldLockAttackAnimation()
+    {
+        var equipmentSystem = GetEquipmentSystem();
+        if (equipmentSystem == null) return false;
+        
+        var currentWeaponProp = equipmentSystem.GetType().GetProperty("CurrentWeapon");
+        if (currentWeaponProp == null) return false;
+        
+        var currentWeapon = currentWeaponProp.GetValue(equipmentSystem);
+        
+        // Chỉ lock khi đang ở slot Gun
+        if (currentWeapon is IShootableWeapon shootableWeapon)
+        {
+            AmmoType ammoType = shootableWeapon.AmmoType;
+            
+            if (AmmoController.Instance == null) return false;
+            
+            // Lock nếu đang reload
+            if (AmmoController.Instance.IsReloading(ammoType))
+            {
+                return true;
+            }
+            
+            // Lock nếu hết đạn (không có đạn trong băng và không có đạn dự trữ)
+            int magazine = AmmoController.Instance.GetCurrentMagazine(ammoType);
+            int reserve = AmmoController.Instance.GetCurrentReserve(ammoType);
+            
+            if (magazine == 0 && reserve == 0)
+            {
+                return true;
+            }
+            
+            // Lock nếu hết đạn trong băng và không thể reload (không có đạn dự trữ)
+            if (magazine == 0 && !AmmoController.Instance.CanReload(ammoType))
+            {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+    
+    /// <summary>
+    /// Xử lý reload cho weapon hiện tại
+    /// </summary>
+    void HandleReload()
+    {
+        var equipmentSystem = GetEquipmentSystem();
+        if (equipmentSystem == null) return;
+        
+        var currentWeaponProp = equipmentSystem.GetType().GetProperty("CurrentWeapon");
+        if (currentWeaponProp == null) return;
+        
+        var currentWeapon = currentWeaponProp.GetValue(equipmentSystem);
+        
+        // Kiểm tra xem weapon có phải IShootableWeapon không
+        if (currentWeapon is IShootableWeapon shootableWeapon)
+        {
+            if (AmmoController.Instance != null)
+            {
+                AmmoController.Instance.StartReload(shootableWeapon.AmmoType);
+            }
         }
     }
 
@@ -411,6 +518,12 @@ public class PlayerMovement : MonoBehaviour
         rb.velocity = Vector2.zero;
         movement = Vector2.zero;
 
+        // Dừng footstep audio khi chết
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.StopAllAudioByID(AudioID.Player_Footstep);
+        }
+
         // Trigger animation Die
         if (ani != null)
         {
@@ -432,6 +545,42 @@ public class PlayerMovement : MonoBehaviour
     public Health GetHealth()
     {
         return health;
+    }
+
+    #endregion
+
+    #region Audio
+
+    /// <summary>
+    /// Xử lý phát tiếng bước chân của player
+    /// </summary>
+    /// <param name="isMoving">Player có đang di chuyển hay không</param>
+    private void HandleFootstepAudio(bool isMoving)
+    {
+        if (AudioManager.Instance == null) return;
+        if (health != null && health.IsDead) return;
+
+        if (isMoving)
+        {
+            footstepTimer -= Time.deltaTime;
+            if (footstepTimer <= 0f)
+            {
+                AudioManager.Instance.PlayAudio(AudioID.Player_Footstep, transform.position);
+                footstepTimer = Mathf.Max(0.05f, footstepInterval);
+            }
+            wasMoving = true;
+        }
+        else
+        {
+            // Nếu player vừa dừng lại (từ moving -> stopped), dừng tất cả footstep audio đang phát
+            if (wasMoving)
+            {
+                AudioManager.Instance.StopAllAudioByID(AudioID.Player_Footstep);
+            }
+            // Reset để khi bắt đầu di chuyển lại sẽ phát tiếng ngay (sau 1 interval)
+            footstepTimer = 0f;
+            wasMoving = false;
+        }
     }
 
     #endregion

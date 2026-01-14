@@ -63,3 +63,9 @@ MonoBehaviour:
     audioData: {fileID: 11400000, guid: 7f57813333b5a694c8c1f0924599ea17, type: 2}
   - audioID: 30
     audioData: {fileID: 11400000, guid: cce8cb69a994e2b43ab09e0158fafe9b, type: 2}
+  - audioID: 32
+    audioData: {fileID: 11400000, guid: 3418216483c1a754797588b900729fd4, type: 2}
+  - audioID: 33
+    audioData: {fileID: 11400000, guid: 7ffa93e9be15a8344929e65d4b7c1a72, type: 2}
+  - audioID: 34
+    audioData: {fileID: 11400000, guid: aad8595d87540f840b549a2974e7b309, type: 2}

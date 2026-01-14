@@ -48,7 +48,7 @@ public class Health : MonoBehaviour
         // Phát audio hurt (trước khi chết)
         if (currentHealth > 0f && AudioManager.Instance != null)
         {
-            AudioID hurtAudioID = GetEnemyHurtAudioID();
+            AudioID hurtAudioID = GetHurtAudioID();
             if (hurtAudioID != AudioID.None)
             {
                 AudioManager.Instance.PlayAudio(hurtAudioID, transform.position);
@@ -69,10 +69,17 @@ public class Health : MonoBehaviour
     }
     
     /// <summary>
-    /// Xác định loại enemy và trả về AudioID hurt tương ứng
+    /// Xác định loại entity và trả về AudioID hurt tương ứng
     /// </summary>
-    private AudioID GetEnemyHurtAudioID()
+    private AudioID GetHurtAudioID()
     {
+        // Player
+        if (IsPlayer())
+        {
+            return AudioID.Player_Hit;
+        }
+
+        // Enemy
         if (GetComponent<MeleeEnemyController>() != null)
         {
             return AudioID.Enemy_Melee_Hurt;
@@ -89,10 +96,17 @@ public class Health : MonoBehaviour
     }
     
     /// <summary>
-    /// Xác định loại enemy và trả về AudioID death tương ứng
+    /// Xác định loại entity và trả về AudioID death tương ứng
     /// </summary>
-    private AudioID GetEnemyDeathAudioID()
+    private AudioID GetDeathAudioID()
     {
+        // Player
+        if (IsPlayer())
+        {
+            return AudioID.Player_Death;
+        }
+
+        // Enemy
         if (GetComponent<MeleeEnemyController>() != null)
         {
             return AudioID.Enemy_Melee_Death;
@@ -106,6 +120,21 @@ public class Health : MonoBehaviour
             return AudioID.Enemy_Shooter_Death;
         }
         return AudioID.None;
+    }
+
+    /// <summary>
+    /// Kiểm tra object này có phải Player hay không
+    /// </summary>
+    private bool IsPlayer()
+    {
+        // Ưu tiên tag "Player" nếu được set đúng trong scene
+        if (CompareTag("Player"))
+        {
+            return true;
+        }
+
+        // Fallback: có component PlayerMovement
+        return GetComponent<PlayerMovement>() != null;
     }
 
     /// <summary>
@@ -156,17 +185,26 @@ public class Health : MonoBehaviour
         // Phát audio chết
         if (AudioManager.Instance != null)
         {
-            AudioID deathAudioID = GetEnemyDeathAudioID();
+            AudioID deathAudioID = GetDeathAudioID();
             if (deathAudioID != AudioID.None)
             {
                 AudioManager.Instance.PlayAudio(deathAudioID, transform.position);
             }
         }
 
-        // Gọi event chết
+        // Gọi event chết (trước khi destroy để các handler có thể xử lý)
         OnDeath?.Invoke();
 
-        // Xử lý sau khi chết
+        // Kiểm tra nếu có EnemySpawnedHandler (dùng với spawn system)
+        // Nếu có, không destroy vì handler sẽ return về pool
+        EnemySpawnedHandler spawnHandler = GetComponent<EnemySpawnedHandler>();
+        if (spawnHandler != null)
+        {
+            // Spawn handler sẽ xử lý return về pool
+            return;
+        }
+
+        // Xử lý sau khi chết (chỉ khi không có spawn handler)
         if (deathDelay > 0f)
         {
             StartCoroutine(DelayedDeath());
@@ -180,6 +218,15 @@ public class Health : MonoBehaviour
     private IEnumerator DelayedDeath()
     {
         yield return new WaitForSeconds(deathDelay);
+        
+        // Kiểm tra lại spawn handler (trong trường hợp handler được add sau)
+        EnemySpawnedHandler spawnHandler = GetComponent<EnemySpawnedHandler>();
+        if (spawnHandler != null)
+        {
+            // Spawn handler sẽ xử lý
+            yield break;
+        }
+        
         if (destroyOnDeath)
         {
             Destroy(gameObject);
@@ -192,6 +239,15 @@ public class Health : MonoBehaviour
     public void FullHeal()
     {
         Heal(maxHealth);
+    }
+
+    /// <summary>
+    /// Reset Health về trạng thái ban đầu (dùng cho Object Pooling)
+    /// </summary>
+    public void ResetHealth()
+    {
+        currentHealth = maxHealth;
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
     }
 
     /// <summary>

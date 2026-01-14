@@ -16,7 +16,7 @@ MonoBehaviour:
   volume: 1
   pitch: 1
   loop: 0
-  audioType: 0
+  audioType: 2
   is3D: 0
   maxDistance: 50
   minDistance: 1

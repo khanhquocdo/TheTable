@@ -20,7 +20,7 @@ MonoBehaviour:
   obstacleLayer:
     serializedVersion: 2
     m_Bits: 128
-  attackRange: 0.47
+  attackRange: 0.68
   attackDamage: 0
   windUpTime: 0.35
   attackCooldown: 0.9

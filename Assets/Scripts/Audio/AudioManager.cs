@@ -36,6 +36,9 @@ public class AudioManager : MonoBehaviour
     // Dictionary để track các AudioSource đang phát theo AudioID (cho loop sounds)
     private Dictionary<AudioID, AudioSource> activeLoopSources = new Dictionary<AudioID, AudioSource>();
     
+    // Dictionary để track tất cả AudioSource đang phát theo AudioID (bao gồm cả non-loop)
+    private Dictionary<AudioID, List<AudioSource>> activeAudioSourcesByID = new Dictionary<AudioID, List<AudioSource>>();
+    
     // List để track tất cả AudioSource đang phát (cho cleanup)
     private List<AudioSource> activeSources = new List<AudioSource>();
     
@@ -178,6 +181,16 @@ public class AudioManager : MonoBehaviour
             activeSources.Add(audioSource);
         }
         
+        // Track AudioSource theo AudioID
+        if (!activeAudioSourcesByID.ContainsKey(audioID))
+        {
+            activeAudioSourcesByID[audioID] = new List<AudioSource>();
+        }
+        if (!activeAudioSourcesByID[audioID].Contains(audioSource))
+        {
+            activeAudioSourcesByID[audioID].Add(audioSource);
+        }
+        
         // Nếu là loop, thêm vào activeLoopSources
         if (audioData.loop)
         {
@@ -254,7 +267,7 @@ public class AudioManager : MonoBehaviour
     }
     
     /// <summary>
-    /// Dừng audio theo AudioID
+    /// Dừng audio theo AudioID (chỉ dừng loop sounds)
     /// </summary>
     public void StopAudio(AudioID audioID)
     {
@@ -270,6 +283,37 @@ public class AudioManager : MonoBehaviour
     }
     
     /// <summary>
+    /// Dừng tất cả audio đang phát của một AudioID (bao gồm cả non-loop)
+    /// </summary>
+    public void StopAllAudioByID(AudioID audioID)
+    {
+        if (activeAudioSourcesByID.TryGetValue(audioID, out List<AudioSource> sources))
+        {
+            // Tạo copy của list để tránh modify trong khi iterate
+            List<AudioSource> sourcesCopy = new List<AudioSource>(sources);
+            
+            // Dừng tất cả AudioSource của AudioID này
+            foreach (AudioSource source in sourcesCopy)
+            {
+                if (source != null && source.isPlaying)
+                {
+                    source.Stop();
+                }
+                ReturnAudioSourceToPool(source);
+            }
+            
+            // Cleanup
+            activeAudioSourcesByID.Remove(audioID);
+            
+            // Cleanup từ activeLoopSources nếu có
+            if (activeLoopSources.ContainsKey(audioID))
+            {
+                activeLoopSources.Remove(audioID);
+            }
+        }
+    }
+    
+    /// <summary>
     /// Trả AudioSource về pool và cleanup
     /// </summary>
     private void ReturnAudioSourceToPool(AudioSource audioSource)
@@ -279,6 +323,21 @@ public class AudioManager : MonoBehaviour
         if (activeSources.Contains(audioSource))
         {
             activeSources.Remove(audioSource);
+        }
+        
+        // Cleanup từ activeAudioSourcesByID
+        foreach (var kvp in activeAudioSourcesByID)
+        {
+            if (kvp.Value.Contains(audioSource))
+            {
+                kvp.Value.Remove(audioSource);
+                // Nếu list rỗng, xóa entry
+                if (kvp.Value.Count == 0)
+                {
+                    activeAudioSourcesByID.Remove(kvp.Key);
+                }
+                break;
+            }
         }
         
         if (audioSourcePool != null)

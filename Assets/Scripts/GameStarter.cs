@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class GameStarter : MonoBehaviour
+public class GameStart : MonoBehaviour
 {
     [SerializeField] private GameObject cutsceneManagerObject;
 

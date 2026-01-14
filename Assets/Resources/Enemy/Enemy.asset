@@ -23,7 +23,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   fireRate: 3
-  bulletDamage: 3
+  bulletDamage: 0
   bulletSpeed: 10
   bulletLifetime: 3
   bulletSpreadAngle: 30

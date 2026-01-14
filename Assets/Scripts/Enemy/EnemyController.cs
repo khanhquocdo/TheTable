@@ -30,6 +30,7 @@ public class EnemyController : MonoBehaviour
     private Rigidbody2D rb;
     private Health health;
     private LineRenderer lineRenderer;       // Vẽ đường đạn
+    private BoidMovement boidMovement;      // Boid Movement System (optional)
     
     // State Machine
     private EnemyState currentState;
@@ -58,6 +59,7 @@ public class EnemyController : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         health = GetComponent<Health>();
         lineRenderer = GetComponent<LineRenderer>();
+        boidMovement = GetComponent<BoidMovement>(); // BoidMovement là optional
         
         // Validate
         if (enemyData == null)
@@ -113,6 +115,12 @@ public class EnemyController : MonoBehaviour
             FindPlayer();
         }
         
+        // Set target cho BoidMovement nếu có
+        if (boidMovement != null && HasPlayerTarget())
+        {
+            boidMovement.SetTarget(playerTarget);
+        }
+        
         // Subscribe to health events
         if (health != null)
         {
@@ -131,6 +139,11 @@ public class EnemyController : MonoBehaviour
         if (playerTarget == null)
         {
             FindPlayer();
+            // Cập nhật target cho BoidMovement
+            if (boidMovement != null && HasPlayerTarget())
+            {
+                boidMovement.SetTarget(playerTarget);
+            }
         }
         
         // Luôn xoay firePoint về player nếu có player target và trong phạm vi phát hiện
@@ -179,6 +192,20 @@ public class EnemyController : MonoBehaviour
         
         // Cập nhật attack state cho animation
         isAttacking = (newStateType == EnemyStateType.Attack);
+        
+        // Cập nhật BoidMovement state nếu có
+        if (boidMovement != null)
+        {
+            bool isChase = (newStateType == EnemyStateType.Chase);
+            bool isAttack = (newStateType == EnemyStateType.Attack);
+            boidMovement.SetState(isChase, isAttack);
+            
+            // Set target cho BoidMovement
+            if (HasPlayerTarget())
+            {
+                boidMovement.SetTarget(playerTarget);
+            }
+        }
         
         switch (newStateType)
         {
@@ -295,10 +322,35 @@ public class EnemyController : MonoBehaviour
     
     /// <summary>
     /// Di chuyển enemy theo hướng (được gọi từ states)
+    /// Nếu có BoidMovement và đang ở Chase/Attack state, sẽ sử dụng Boid direction
     /// </summary>
     public void Move(Vector2 direction)
     {
+        // Nếu có BoidMovement và đang ở state phù hợp, sử dụng Boid direction
+        if (boidMovement != null)
+        {
+            Vector2 boidDirection = boidMovement.CalculateBoidDirection();
+            if (boidDirection != Vector2.zero)
+            {
+                movementDirection = boidDirection;
+                return;
+            }
+        }
+        
+        // Nếu không có BoidMovement hoặc Boid không hoạt động, dùng direction gốc
         movementDirection = direction.normalized;
+    }
+    
+    /// <summary>
+    /// Lấy hướng di chuyển từ BoidMovement nếu có và đang hoạt động
+    /// </summary>
+    public Vector2 GetBoidDirection()
+    {
+        if (boidMovement != null)
+        {
+            return boidMovement.CalculateBoidDirection();
+        }
+        return Vector2.zero;
     }
     
     /// <summary>
