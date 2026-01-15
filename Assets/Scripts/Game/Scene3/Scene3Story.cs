@@ -11,7 +11,9 @@ public class Scene3Story : MonoBehaviour
     public string you = "Tôi";
     public string yourName = "Hoàng";
     [SerializeField] private string nextSceneName = "Ending";
-    
+    public GameObject ps;
+    public Transform psTransform;
+
     void Awake()
     {
         if (Instance == null)
@@ -25,7 +27,7 @@ public class Scene3Story : MonoBehaviour
         QuestManager.Instance.OnQuestCompleted += HandleQuestCompleted;
         StartCoroutine(ShowIntroText());
     }
-    
+
     void OnDestroy()
     {
         if (QuestManager.Instance != null)
@@ -33,16 +35,17 @@ public class Scene3Story : MonoBehaviour
             QuestManager.Instance.OnQuestCompleted -= HandleQuestCompleted;
         }
     }
-    
+
     private void HandleQuestCompleted(Quest quest)
     {
         if (quest.questID == "Q3")
         {
             UIChatManager.Instance.SendChat("Xong rồi sao???", you, ChatPosition.Right);
+            Instantiate(ps, transform.position, Quaternion.identity);
             StartCoroutine(LoadSceneAfterDelay());
         }
     }
-    
+
     private IEnumerator LoadSceneAfterDelay()
     {
         yield return new WaitForSeconds(5f);
