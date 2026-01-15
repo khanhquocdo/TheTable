@@ -4,7 +4,7 @@ public class GameStart : MonoBehaviour
 {
     [SerializeField] private GameObject cutsceneManagerObject;
 
-    private void Start()
+    public void Start()
     {
         if (cutsceneManagerObject != null && !cutsceneManagerObject.activeInHierarchy)
         {

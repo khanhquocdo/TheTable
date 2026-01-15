@@ -21,7 +21,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   attackRange: 0.68
-  attackDamage: 0
+  attackDamage: 1
   windUpTime: 0.35
   attackCooldown: 0.9
   attackDuration: 0.3
