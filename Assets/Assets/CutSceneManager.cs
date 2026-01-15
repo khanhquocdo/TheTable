@@ -34,7 +34,7 @@ public class CutsceneManager : MonoBehaviour
         fadePanel.color = new Color(fadeColor.r, fadeColor.g, fadeColor.b, 0);
     }
 
-    public void PlayCutscene(string nextSceneName, float duration = 2f)
+    public void PlayCuCutsceneSequencetscene(string nextSceneName, float duration = 2f)
     {
         if (Instance == null)
         {

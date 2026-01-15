@@ -250,7 +250,7 @@ MonoBehaviour:
   alignmentWeight: 1
   targetWeight: 3
   enableInChase: 1
-  enableInAttack: 1
+  enableInAttack: 0
   attackStateForceMultiplier: 0.3
   showDebugGizmos: 1
   neighborRadiusColor: {r: 0, g: 1, b: 0, a: 0.3}

@@ -26,7 +26,7 @@ MonoBehaviour:
   maxAttackDistance: 12
   turretRotationSpeed: 360
   fireRate: 0.1
-  projectileDamage: 0
+  projectileDamage: 10
   projectileSpeed: 8
   projectileLifetime: 5
   explosionRadius: 3
